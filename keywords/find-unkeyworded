@@ -15,7 +15,6 @@ packages=()
 
 get_maintained_packages() {
     packages=$(portageq --repo gentoo -n ${maintainer:+--maintainer-email ${maintainer}})
-    #packages=$(cat foo)
 }
 
 check_package() {
