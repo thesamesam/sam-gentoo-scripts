@@ -22,8 +22,8 @@ check_package() {
 	return 0
     fi
 
-    atom=$(portageq best_visible / ${package})
-    keywords=$(portageq metadata / ebuild ${atom} KEYWORDS)
+    atom=$(portageq best_visible ${EROOT:-/} ${package})
+    keywords=$(portageq metadata ${EROOT:-/} ebuild ${atom} KEYWORDS)
 
     # Check if it's keyworded/stable for our base
     # Then make sure we're not keyworded/stable for it
