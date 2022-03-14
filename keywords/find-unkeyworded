@@ -9,7 +9,7 @@
 maintainer=""
 #maintainer="some-project-to-treat-specially"
 log=n
-metadata_path="/var/db/repos/gentoo/metadata/md5-cache/"
+metadata_path=$(portageq get_repo_path ${EROOT:-/} gentoo)/metadata/md5-cache/
 
 packages=()
 
