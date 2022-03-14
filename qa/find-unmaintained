@@ -51,7 +51,7 @@ check_package() {
 get_packages_by_maintainer() {
 	local maintainer=${1}
 
-	echo $(PORTDIR_OVERLAY="/home/sam/git/gentoo" portageq --repo gentoo -n --maintainer-email ${1})
+	echo $(portageq --repo gentoo -n --maintainer-email ${1})
 }
 
 
