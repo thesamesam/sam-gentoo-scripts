@@ -14,7 +14,7 @@ A collection of scripts for Gentoo development.
 #### Keywords
 
 * `at-find-unkeyworded-for-arch`: find packages unkeyworded for `${TARGET_ARCH}`
-  relative to `${BASE_ARCH}` (e.g. suppose trying to get `riscv` parity with ``rm64`)
+  relative to `${BASE_ARCH}` (e.g. suppose trying to get `riscv` parity with `arm64`)
 
 * `find-unkeyworded`: find packages which have an unkeyworded version in ::gentoo
   for all arches. This sometimes happens and is forgotten about after committing
