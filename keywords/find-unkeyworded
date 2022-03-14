@@ -2,8 +2,8 @@
 # Find non-live ebuilds lacking any KEYWORDS
 # Uses:
 # - Find things which have been "unkeyworded for testing" indefinitely
-#   (should either be masked with ideally a corresponding bug so it doesn't
-#   get lost, keyworde dfinally, or removed.)
+#   (should either be masked with ideally a corresponding bug so it can be
+#   keyworded finally, gets removed, or doesn't get lost)
 
 # Configuration
 maintainer=""
