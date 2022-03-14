@@ -1,0 +1,67 @@
+#!/bin/bash
+# Configuration
+target="arm64"
+base="amd64"
+maintainer=""
+#maintainer="base-system@gentoo.org"
+log=n
+
+packages=()
+
+get_maintained_packages() {
+    packages=$(portageq --repo gentoo -n ${maintainer:+--maintainer-email ${maintainer}})
+}
+
+check_package() {
+    local found_base=0
+    local found_target=0
+    local package=${1}
+
+    # Stable on all arches in the eclass
+    if [[ ${package} =~ (acct-user|acct-group) ]] ; then
+	return 0
+    fi
+
+    atom=$(portageq best_visible / ${package})
+    keywords=$(portageq metadata / ebuild ${atom} KEYWORDS)
+
+    # Check if it's keyworded/stable for our base
+    # Then make sure we're not keyworded/stable for it
+    for keyword in ${keywords[*]} ; do
+	if [[ ${keyword} =~ ${base} ]] ; then
+	    [[ ${log} == y ]] && echo "The base (${base}) has keywords for this atom"
+	    found_base=1
+	    continue
+	fi
+
+	if ! [[ ${keyword} =~ ${target} ]] ; then
+	    [[ ${log} == y ]] && echo "The target (${target}) has no keywords for this atom"
+	else
+	    found_target=1
+	    break
+	fi
+    done
+
+    [[ ${found_base} -eq 1 ]] && [[ ${found_target} -eq 0 ]] && return 1
+    return 0
+}
+
+check_list() {
+    for package in ${packages} ; do
+	[[ ${log} == y ]] && echo "Checking ${package}"
+
+	check_package ${package}
+	success=$?
+
+	if [[ ${success} -eq 0 ]] ; then
+	    [[ ${log} == y ]] && echo "All good: ${package}"
+	    :;
+	else
+	    echo "Need to keyword: ${package}"
+	fi
+
+    done
+}
+
+get_maintained_packages
+check_list

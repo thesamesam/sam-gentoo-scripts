@@ -1,0 +1,20 @@
+#!/bin/bash
+# Find new packages for a maintainer and list them
+# Useful for e.g. looking at whether some contributors add more new packages
+# than others, and possibly directing them to GURU or similar instead.
+
+authors="(some-package)"
+category=""
+
+paths=$(ls -1 ${category}/)
+
+for pkg in ${paths[@]} ; do
+	entry=$(git log --diff-filter=A --pretty="%ae:%h:%ad" ${category}/${pkg}/metadata.xml)
+	author=$(echo ${entry} | cut -d: -f1)
+	hash=$(echo ${entry} | cut -d: -f2)
+	date=$(echo ${entry} | cut -d: -f3)
+
+	if [[ $(echo ${author} | grep -P "${authors[@]}") ]] ; then
+		echo "${pkg}:${author}:${hash}:${date}"
+	fi
+done

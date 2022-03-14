@@ -1,0 +1,21 @@
+#!/bin/bash
+# cleanup-branches
+
+# Deletes branches matching a glob
+
+# Usage:
+# bash ~/script/cleanup-branches *-blacklist *-whitelist
+
+target_branches=$(git branch | grep ${@} | xargs echo)
+
+echo "Going to delete the following branches:"
+echo " ${target_branches[@]}"
+
+read -p "OK? (y/n) " answer
+
+if [[ ${answer:n} == "y" ]] ; then
+	echo "Deleting..."
+	git branch -D ${target_branches[@]}
+else
+	echo "Not deleting, exiting."
+fi

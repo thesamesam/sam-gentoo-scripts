@@ -1,0 +1,57 @@
+#!/bin/bash
+# Find non-live ebuilds lacking any KEYWORDS
+# Uses:
+# - Find things which have been "unkeyworded for testing" indefinitely
+#   (should either be masked with ideally a corresponding bug so it doesn't
+#   get lost, keyworde dfinally, or removed.)
+
+# Configuration
+maintainer=""
+#maintainer="some-project-to-treat-specially"
+log=n
+metadata_path="/var/db/repos/gentoo/metadata/md5-cache/"
+
+packages=()
+
+get_maintained_packages() {
+    packages=$(portageq --repo gentoo -n ${maintainer:+--maintainer-email ${maintainer}})
+    #packages=$(cat foo)
+}
+
+check_package() {
+    local package=${1}
+
+    # Stable on all arches in the eclass
+    if [[ ${package} =~ (acct-user|acct-group) ]] ; then
+	return 0
+    fi
+
+    versions="${metadata_path%/}/${package}*"
+
+    for atom in ${versions[@]}; do
+	keywords=$(grep KEYWORDS ${atom})
+	if [[ -z ${keywords} ]] ; then
+	    properties=$(grep PROPERTIES ${atom})
+
+	    if [[ ${properties} == *live* ]] ; then
+		[[ ${log} == y ]] && echo "Skipping ${atom} because live"
+		continue
+	    fi
+
+	    echo "Lacks keywords: =${atom#${metadata_path}}"
+	fi
+    done
+
+    return 0
+}
+
+check_packages() {
+    for package in ${packages} ; do
+        [[ ${log} == y ]] && echo "Checking ${package}"
+
+        check_package ${package}
+    done
+}
+
+get_maintained_packages
+check_packages

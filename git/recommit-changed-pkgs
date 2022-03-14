@@ -1,0 +1,58 @@
+#!/bin/bash
+# recommit-changed-pkgs
+
+# Commits all changes with a given template
+# Can exclude by maintainer.
+# Useful for e.g. big batch changes like a sed across tree
+
+# Usage:
+# ~/scripts/recommit-changed-pkgs
+
+# Configuration:
+# - maintainers: maintainers to skip
+# - template: file containing "*: msg" or "cat/pkg: msg" respectively for pkgdev/repoman
+# - tool: pkgdev or repoman
+# - debug: noisy or not
+maintainers="(some-project-to-treat-specially)"
+maintainers=""
+template="~/scripts/template-repoman"
+tool="repoman"
+debug=1
+
+#
+
+# Get a list of the files changed
+list=$(git diff --name-only | grep -v "/layout/" | grep -v "/metadata/")
+
+# Parse out the directories to make it easier to see metadata.xml
+dirs=()
+for file in ${list[@]} ; do
+	dirs+=($(dirname "${file}"))
+done
+
+# Mangle the format for iteration
+dirs=($(echo ${dirs[@]} | tr ' ' '\n' | sort -u))
+
+# Iterate over all of the files changed locally (unstaged)
+# If any ebuilds are in a directory mentioning a maintainer
+# we want to skip, we don't stage the changes.
+for dir in ${dirs[@]} ; do
+	if [[ ${dir} == *eclass* ]] || [[ ${dir} == *metadata* ]] ; then
+		continue
+	fi
+
+	if ! [[ -z ${maintainers} ]] ; then
+		egrep -qe "${maintainers}" "${dir}"/metadata.xml
+		if [[ $? -eq 0 ]] ; then
+			[[ ${debug} -eq 1 ]] && echo "Skipping ${dir}";
+			continue
+		fi
+	fi
+
+	cd "${dir}"
+
+	git add .
+	${tool} commit --straight-to-stable -M ~/scripts/template-repoman
+
+	cd ../..
+done

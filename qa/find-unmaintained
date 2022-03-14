@@ -1,0 +1,65 @@
+#!/bin/bash
+# Find packages which ostensibly have a maintainer but haven't
+# received any commits from them in the last year.
+# Uses:
+# - Reassigning packages which are "maintained" by a e.g. "dead project"
+#   which leads to bugs being missed and not addressed. Reassigning such
+#   packages to e.g. maintainer-needed better reflects reality and makes
+#   clear to say, users that help is needed with the package.
+
+check_package() {
+	local pkg=${1}
+	local maintainer=${2}
+	local commits=( )
+
+	IFS=$'\n' commits=( $(git log --pretty="%H,%ae,%at" ${pkg}) )
+
+	current_time=$(date +%s)
+	year_ago=$((${current_time} - $(date --date="$(date --iso-8601=s -d @${current_time}) -1 year" +%s)))
+	delta=0
+	found_any=0
+
+	for commit in "${commits[@]}" ; do
+		chash=$(echo ${commit} | cut -d',' -f1)
+		author=$(echo ${commit} | cut -d',' -f2)
+		date=$(echo ${commit} | cut -d',' -f3)
+		#echo "${chash} by ${author} on ${date} for ${pkg}"
+		#echo "${commit}"
+
+		if [[ ${author} != ${maintainer} ]] ; then
+			# Not interested in tracking drive-by commits
+			continue
+		fi
+
+		new_delta=$((${current_time} - ${date}))
+
+		#echo "new delta: ${new_delta}"
+		#echo "old delta: ${delta}"
+
+		if [[ ${found_any} -eq 0 ]] || [[ ${new_delta} -lt ${delta} ]] ; then
+			delta=${new_delta}
+		fi
+
+		found_any=1
+	done
+
+    if [[ ${found_any} -eq 0 ]] || [[ ${delta} -gt ${year_ago} ]] ; then
+        echo "bad for ${pkg}"
+    fi
+}
+
+get_packages_by_maintainer() {
+	local maintainer=${1}
+
+	echo $(PORTDIR_OVERLAY="/home/sam/git/gentoo" portageq --repo gentoo -n --maintainer-email ${1})
+}
+
+
+maintainer="foo@gentoo.org"
+
+candidate_packages=$(get_packages_by_maintainer ${maintainer})
+#candidate_packages=$(</tmp/list)
+
+for package in ${candidate_packages[@]} ; do
+	check_package ${package} ${maintainer}
+done

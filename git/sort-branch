@@ -1,0 +1,23 @@
+#!/bin/bash
+# sort-branch
+# Sorts a given git branch's commits alphabetically
+# (useful for e.g. Gentoo commits which are prefixed with 'category/package:')
+
+# Usage:
+#  ~/scripts/sort-branch origin/master misc
+
+# Configuration:
+# base - the branch you based your work on (clean)
+# new - a branch with a load of unsorted commits
+
+base=${1:-origin/master}
+new=${2:-master}
+
+#
+identifier=$(openssl rand -hex 5)
+
+git checkout -q -b ${new}-sorted-${identifier} ${base}
+git cherry-pick $(git rev-list origin/master..${new} --oneline | sort -k2 | cut -d" " -f1)
+
+echo "If everything went okay, checkout your original branch ('${new}') and update its HEAD:"
+echo "	git checkout ${new} && git reset --hard ${new}-sorted-${identifier} && git branch -D ${new}-sorted-${identifier}"

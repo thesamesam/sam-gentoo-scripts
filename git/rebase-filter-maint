@@ -1,0 +1,195 @@
+#!/bin/bash
+# rebase-filter-maint
+
+# A script to cherry-pick commits affecting only certain Gentoo
+# package maintainer(s) (or not)
+
+# Usage:
+# - git checkout -b filtered
+# - git reset --hard ${base}
+# - bash ~/scripts/rebase-filter
+
+# Configuration:
+# - maintainers: regex of maintainers to filter for/out
+# - mode: whitelist (only cherry-pick these) or blacklist (cherry-pick everything BUT these)
+# - base: clean original branch you did work on top of
+# - minefield: branch with mixed commits to filter
+# - create_branches: automatically create a new branch with filter
+# - create_branches_inverse: create the inverse of the branch too
+# - continue_on_error: give a list of commits which need rebasing at the end
+# - debug: noisy or not?
+
+maintainers="(some-project-to-treat-specially)"
+mode="blacklist"
+base="origin/master"
+minefield="misc"
+create_branches=1
+create_branches_inverse=0
+continue_on_error=0
+sorted=1
+debug=1
+
+#
+skipped_commits=()
+error_commits_whitelist=()
+error_commits_blacklist=()
+
+get_action_inverse() {
+	local action=${1}
+
+	case ${action} in
+		"whitelist")
+			echo "blacklist"
+        	;;
+		"blacklist")
+			echo "whitelist"
+		;;
+	esac
+}
+
+get_action() {
+	local result=${1}
+
+	# Flip the boolean if we're in whitelist vs blacklist
+	# (In whitelist mode, this is 1 if we get a commit by a maintainer we want
+	# and 0 otherwise.
+	# In blacklist mode, this is 0 if we get a commit by a maintainer we don't want
+	# and 1 otherwise.)
+	case ${mode} in
+		"whitelist")
+			echo "${result}"
+		;;
+		"blacklist")
+			echo "!${result}"
+		;;
+	esac
+}
+
+check_commits() {
+	# Which branch are we putting things in?
+	local target=${1}
+	# Get a list of all of the commits we need to check
+	local commits=$(git rev-list ${base}..${target})
+
+	if [[ ${sorted} -eq 1 ]] ; then
+		echo "Reversing list of commits"
+		commits=$(echo ${commits} | tac -s " ")
+	fi
+
+	for commit in ${commits[@]} ; do
+		# For each commit, get the files it touches
+		list=$(git diff --name-only ${commit}~1..${commit} | grep -v layout)
+
+		# Parse out the directories to make it easier to see metadata.xml
+		dirs=()
+		for file in ${list[@]} ; do
+			dirs+=($(dirname "${file}"))
+		done
+
+		# Mangle the format for iteration
+		dirs=($(echo ${dirs[@]} | tr ' ' '\n' | sort -u))
+
+		# Iterate over all of them
+		# If any ebuilds are in a directory mentioning a maintainer
+		# we want to split out, we grab the commit
+		target_maintainer=0
+		for dir in ${dirs[@]} ; do
+			if [[ ${dir} == *eclass* ]] ; then
+				continue
+			fi
+
+			if [[ ${dir} == */files ]] ; then
+				continue
+			fi
+
+			[[ ${debug} -eq 1 ]] && echo "Checking in ${dir}..."
+
+			egrep -qe "${maintainers}" "${dir}"/metadata.xml
+			if [[ $? -eq 0 ]] ; then
+				target_maintainer=$(get_action 1)
+			else
+				if ! [[ ${target_maintainer} -eq 1 ]] ; then
+					target_maintainer=$(get_action 0)
+				fi
+			fi
+		done
+
+		if [[ ${target_maintainer} -eq 1 ]] ; then
+			# If any of the files are owned by a target maintainer, we count the commit
+			[[ ${debug} -eq 1 ]] && echo "Continuing..."
+			git cherry-pick ${commit}
+
+			if [[ $? -eq 1 ]] ; then
+				echo "Cherry-pick of ${commit} failed! Please investigate!"
+
+				if [[ ${continue_on_error} -eq 1 ]] ; then
+					if [[ ${mode} -eq "whitelist" ]] ; then
+						error_commits_whitelist+=( ${commit} )
+					elif [[ ${mode} -eq "blacklist" ]] ; then
+						error_commits_blacklist+=( ${commit} )
+					fi
+				fi
+
+				git cherry-pick --skip
+			fi
+		else
+			# If none are, skip it
+			[[ ${debug} -eq 1 ]] && echo "Skipping..."
+			skipped_commits+=( ${commit} )
+		fi
+	done
+}
+
+if [[ ${create_branches} -eq 1 ]] ; then
+	# Generate a 'unique' identifier
+	identifier=$(openssl rand -hex 5)
+
+	# Create a branch (or branches as requested)
+	git branch ${identifier}-${mode} ${base}
+
+	if [[ ${create_branches_inverse} -eq 1 ]] ; then
+		git branch ${identifier}-$(get_action_inverse ${mode}) ${base}
+	fi
+
+	# Do the original mode requested first
+	git checkout ${identifier}-${mode}
+	check_commits ${minefield}
+	echo "Branch '${identifier}-${mode}' contains the ${mode} commits requested"
+
+	if [[ ${create_branches_inverse} -eq 1 ]] ; then
+		git checkout ${identifier}-$(get_action_inverse ${mode})
+
+		for commit in ${skipped_commits[@]} ; do
+			git cherry-pick ${commit}
+			if [[ $? -eq 1 ]] ; then
+        		        echo "Cherry-pick of ${commit} failed! Please investigate!"
+
+		                if [[ ${continue_on_error} -eq 1 ]] ; then
+					if [[ ${mode} -eq "whitelist" ]] ; then
+						error_commits_whitelist+=( ${commit} )
+					elif [[ ${mode} -eq "blacklist" ]] ; then
+						error_commits_blacklist+=( ${commit} )
+					fi
+				fi
+
+				git cherry-pick --skip
+			fi
+		done
+		echo "Branch '${identifier}-$(get_action_inverse ${mode})' contains the inverse of ${mode} commits requested"
+	else
+		if [[ ${continue_on_error} -eq 1 ]] && ! ( [[ -z ${error_commits_whitelist } ]] || [[ -z ${error_commits_blacklist} ]] ) ; then
+			echo "Commits for whitelist branch: ${error_commits_whitelist[@]}"
+			echo "Commits for blacklist branch: ${error_commits_blacklist[@]}"
+		fi
+	fi
+
+	echo "Checking out original work branch '${minefield}'"
+	git checkout ${minefield}
+else
+	check_commits ${minefield}
+fi
+
+if [[ ${continue_on_error} -eq 1 ]] && ( ! [[ -z ${error_commits_whitelist} ]] || ! [[ -z ${error_commits_blacklist} ]] ) ; then
+	echo "Commits for whitelist branch: ${error_commits_whitelist[@]}"
+	echo "Commits for blacklist branch: ${error_commits_blacklist[@]}"
+fi

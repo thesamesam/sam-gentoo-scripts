@@ -1,0 +1,63 @@
+#!/bin/bash
+# check-all-changed-pkgs
+
+# Runs 'ebuild ... clean prepare' on a all packages touched locally.
+# Useful for checking e.g. mass-changes to patches for formatting.
+
+# Configuration:
+#	- maintainers: maintainers to skip
+#	- template: file containing "*: msg" or "cat/pkg: msg" respectively for pkgdev/repoman
+#	- tool: pkgdev or repoman
+#	- debug: noisy or not
+#maintainers="(some-project-to-treat-specially)"
+maintainers=""
+template="~/scripts/template-repoman"
+tool="repoman"
+debug=1
+
+#
+
+# Get a list of the files changed
+list=$(git diff origin/master...HEAD --name-only | grep -v "/layout/" | grep -v "/metadata/")
+
+# Parse out the directories to make it easier to see metadata.xml
+dirs=()
+for file in ${list[@]} ; do
+	dirs+=($(dirname "${file}"))
+done
+
+# Mangle the format for iteration
+dirs=($(echo ${dirs[@]} | tr ' ' '\n' | sort -u))
+
+# Iterate over all of the files changed locally (unstaged)
+# If any ebuilds are in a directory mentioning a maintainer
+# we want to skip, we don't stage the changes.
+for file in ${list[@]} ; do
+	dir=$(dirname ${file})
+
+	if [[ ${dir} == *eclass* ]] || [[ ${dir} == *metadata* ]] || [[ ${dir} == */files ]] ; then
+		continue
+	fi
+
+	if [[ ${file} != *.ebuild ]] ; then
+		continue
+	fi
+
+	category=$(echo ${file} | cut -d '/' -f 1)
+
+	if [[ ${category} == *java* || ${category} == *vdr* || ${file} == *vdr-* ]] ; then
+		continue
+	fi
+
+	if ! [[ -f ${file} ]] ; then
+		echo "Skipping removed file: ${file}"
+		continue
+	fi
+
+	pkg=$(qatom -F "${category}/%{PF}.ebuild" ${file})
+	cpn=$(qatom -F "${category}/%{PN}" ${file})
+
+	echo "Checking ${file}..."
+	ebuild ${file} clean prepare || exit 1
+	echo "Check of ${file} succeeded"
+done
