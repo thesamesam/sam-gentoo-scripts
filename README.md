@@ -11,6 +11,9 @@ A collection of scripts for Gentoo development.
 * `find-unmaintained`: find packages nominally maintained but with no commits
    from their maintainer recently
 
+* `report-bugs-pkgcheck`: report bugs on Bugzilla en-masse for packages
+   triggering a given `pkgcheck` check/warning
+
 #### Keywords
 
 * `at-find-unkeyworded-for-arch`: find packages unkeyworded for `${TARGET_ARCH}`

@@ -1,0 +1,106 @@
+#!/bin/bash
+# Takes a pkgcheck warning and reports bugs for each package triggering that
+# warning to respective package maintainers on Bugzilla.
+# TODO: could factor some of it out a bit better to allow use for things
+# other than pkgcheck.
+
+. /lib/gentoo/functions.sh
+
+connection="gentoo"
+# For testing, may wish to use NATTkA's test Bugzilla instance (Docker container)
+# https://github.com/mgorny/nattka/tree/master/test/bugzilla-instance
+#connection="gentoo-test"
+
+# Used as 'pkgcheck scan -k ...'
+pkgcheck_warning="VariableScope"
+# This gets prefixed with 'package: '
+bug_summary="uses variables banned in scope (${pkgcheck_warning})"
+bug_description="This package uses variables banned in some scopes. This may stop working in future versions of Portage."
+# All filed bugs will block this tracker
+bug_tracker=775191
+
+bad_files=$(pkgcheck scan -k ${pkgcheck_warning} -R FormatReporter --format "{category}/{package}")
+#bad_files=$(sort -u /tmp/bad_pkgs)
+
+get_maintainers() {
+	local pkg=${1}
+	local maintainers
+
+	maintainer_metadata=$(pquery ${bad_package} --one-attr="maintainers" | head -n1)
+	# Normally, format looks like: Maintainer A <a@gentoo.org> Maintainer B <b@gentoo.org> ...
+	# We want to just capture the emails (<a@gentoo.org> <b@gentoo.org>)
+	# Regex: ((?<=<)(.*?)(?=>)
+	#
+        # But if not all maintainers have names, it might look like:
+        # Maintainer A <a@gentoo.org> b@gentoo.org
+	# Regex: \b([A-z0-9]+)@gentoo.org
+	#
+	# Then we just combine the both with (a|b).
+	maintainer_metadata=$(echo ${maintainer_metadata} | grep -Po "((?<=<)(.*?)(?=>)|\b([A-z0-9]+)@gentoo.org)")
+
+	if [[ -z ${maintainer_metadata} ]] ; then
+		maintainer_metadata="maintainer-needed@gentoo.org"
+	fi
+
+	maintainer_metadata=$(echo ${maintainer_metadata} | uniq)
+
+	echo "${maintainer_metadata[@]}"
+}
+
+report_bug() {
+	local package=${1}
+	shift
+	local assignee=${1}
+
+	# Leave $@ as CCs (non-primary maintainers)
+	shift
+
+	(
+		eindent
+		einfo "Assignee: ${assignee}"
+		[[ -n ${@} ]] && einfo "CC: ${@}"
+	)
+
+	bugz_output=$(bugz \
+		--connection ${connection} \
+		post \
+		--batch \
+		--product "Gentoo Linux" \
+		--component "Current packages" \
+		--version unspecified \
+		--op-sys All \
+		--platform All \
+		-a "${assignee}" \
+		--cc="$(IFS=,; echo ${@})" \
+		-t "${package}: ${bug_summary}" \
+		-d "${bug_description}" \
+		--append-command "pkgcheck scan -k ${pkgcheck_warning} ${package}")
+
+	bug_id=$(echo "${bugz_output[@]}" | tail -n1)
+	# Output looks like:  * Info: Bug 26 submitted
+	# We want just the bug number
+	bug_id=$(echo ${bug_id} | grep -Po "([0-9]+)")
+
+	echo "Reported bug: ${bug_id}"
+	# bugz won't let us add a blocker at point of creation, so modify
+	# the bug we just made to add it a blocker on the tracker.
+	bugz \
+		--connection ${connection} \
+		modify \
+		--add-blocked ${bug_tracker} \
+		${bug_id}
+}
+
+for bad_package in ${bad_files[@]} ; do
+	(
+		einfo "Found bad package: ${bad_package}"
+		eindent
+
+		einfo "Maintainers:"
+		eindent
+		get_maintainers ${bad_package}
+		maintainers=$(get_maintainers ${bad_package})
+
+		report_bug ${bad_package} ${maintainers[@]}
+	)
+done
