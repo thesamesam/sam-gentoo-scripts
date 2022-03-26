@@ -27,7 +27,7 @@ A collection of scripts for Gentoo development.
 
 #### Assorted scripts
 
-* `check-all-changed-pkgs`: run 'ebuild .. clean prepare' (or up to some other
+* `check-all-changed-pkgs`: run `ebuild .. clean prepare` (or up to some other
    phase) on all packages with local pending changes. Useful for ensuring e.g.
    mass revbumps or other QA fixes haven't broken e.g. applying patches (think
    of e.g. `${PF}` being used in `PATCHES`)
