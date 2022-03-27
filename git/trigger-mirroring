@@ -1,0 +1,20 @@
+#!/bin/bash
+# Iterate over a list of repositories and push a dummy branch (then delete it)
+# to trigger gentoo infra's mirroring to github.
+
+REPO_BASE="${HOME}/git"
+
+. /lib/gentoo/functions.sh
+
+repos=${@}
+
+for repo in ${repos[@]} ; do
+	cd ${REPO_BASE}/${repo} || { eerror "Could not open ${REPO_BASE}/${repo}" ; exit 1; }
+	einfo "Processing ${REPO_BASE}/${repo}"
+
+	# TODO: check if branch exists & bail out if it does?
+	git checkout master
+	git checkout -b test-mirroring-trigger && git reset --hard origin/master
+	git push origin test-mirroring-trigger
+	git push origin :test-mirroring-trigger
+done
