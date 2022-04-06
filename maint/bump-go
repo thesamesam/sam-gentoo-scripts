@@ -1,0 +1,75 @@
+#!/bin/bash
+# TODO: could add guessed subdir into S in ebuild?
+# TODO: handle licensing
+. /lib/gentoo/functions.sh
+
+ORIGINAL_PWD=$(pwd)
+
+$(portageq get_repo_path ${EROOT:-/} overlay)/scripts/bump-generic $@ || exit 1
+
+cd ${1} || exit 1
+
+pn=$(pwd | rev | cut -d/ -f1 | rev)
+ebuild=${pn}-${2}.ebuild
+
+# Now do the Go-specific bits.
+#
+# 1. sed out the dep tarball line if there is one, so we can fetch.
+einfo "Sedding out 'deps' tarball line if exists"
+sed -i -e "/^SRC_URI.*deps/ s/^/#/" ${ebuild} || exit 1
+
+# 2. Fetch!
+einfo "Fetching ${1}-${2}"
+ebuild ${ebuild} manifest || exit 1
+
+# 3. Unpack then fetch Go deps
+einfo "Unpacking ${1}-${2}"
+
+# (We want to own this place)
+WORKDIR=$(mktemp -d || exit 1)
+PORTAGE_USERNAME="$(whoami)" PORTAGE_WORKDIR_MODE="775" PORTAGE_TMPDIR="${WORKDIR}" ebuild ${ebuild} clean unpack || exit 1
+
+cmd='GOMODCACHE="${PWD}"/go-mod go mod download -modcacherw'
+ebegin "Running '${cmd}'"
+(
+    cd "${WORKDIR}"/portage/${1}-${2}/work/${pn}-${2}/ || exit 1
+
+    if [[ ! -f go.mod ]] ; then
+        ewarn "No go.mod in $(pwd)!"
+        ewarn "Guessing first top-level subdir with go.mod?"
+        dirs=$(find . -maxdepth 1 -type d -print)
+
+        for dir in ${dirs[@]} ; do
+            if [[ -f ${dir}/go.mod ]] ; then
+                einfo "Entering ${dir} which contains a go.mod file"
+                cd ${dir} || exit 1
+            fi
+        done || { eerror "Could not find any go.mod in top-level subdirs either!" ; exit 1; }
+    fi
+
+    eval "${cmd}" || exit 1
+) || { eend $? ; exit 1; }
+
+ebegin "Creating tarball"
+(
+    cd "${WORKDIR}"/portage/${1}-${2}/work/${pn}-${2}/ || exit 1
+
+    # Find the (sub)dir we used earlier, even if it was a subdir we guessed
+    cd $(find . -maxdepth 2 -type d -name '*go-mod*' -print -quit || exit 1)/.. || exit 1
+
+    tar -acf ${pn}-${2}-deps.tar.xz go-mod || exit 1
+
+    mv ${pn}-${2}-deps.tar.xz $(portageq distdir)/ || exit 1
+) || { eend $? ; exit 1; }
+
+# 4. Undo the sed we did earlier to the ebuild
+cd ${ORIGINAL_PWD}/${1} || exit 1
+einfo "Unsedding deps line in ebuild"
+sed -i -e "/^#SRC_URI.*deps/ s/^#//" ${ebuild} || exit 1
+
+einfo "Generating manifest"
+ebuild ${ebuild} clean manifest || exit 1
+
+einfo "All done."
+einfo "Dep tarball now at: $(portageq distdir)/${pn}-${2}-deps.tar.xz!"
+

@@ -1,0 +1,69 @@
+#!/bin/bash
+# TODO: merge this with ebump somehow?
+. /lib/gentoo/functions.sh
+
+get_last_version() {
+    local cpn=${1}
+    local ver=${2}
+
+    # Copied from other script (gbump)
+    if [[ -z ${ver} ]] ; then
+        last_version_cpv=$(portageq best_visible "${EROOT:-/}" "${cpn}")
+    else
+        last_version_cpv=$(portageq best_visible "${EROOT:-/}" "<${cpn}-${ver}")
+    fi
+
+    last_version_p=$(qatom -F "%{P}" ${last_version_cpv})
+
+    echo ${last_version_p}
+}
+
+pkg=${1}
+ver=${2}
+template_pkg=net-dns/dnsx
+
+if [[ -z ${pkg} ]] ; then
+    eerror "No package given!"
+    exit 1
+fi
+
+if [[ -z ${ver} ]] ; then
+    eerror "No version given!"
+    exit 1
+fi
+
+if [[ ! -d profiles/ ]] ; then
+    eerror "Please run from repository root!"
+    exit 1
+fi
+
+pn=$(echo ${pkg} | cut -d/ -f2)
+
+einfo "Bumping ${pkg} to ${ver}"
+
+# Is it a new package?
+if [[ ! -d ${pkg} ]] ; then
+    einfo "${pkg} does not yet exist, using ${template_pkg} as template"
+
+    mkdir -p ${pkg} || exit 1
+    cd ${pkg} || exit 1
+
+    last_version_p=$(get_last_version ${template_pkg})
+
+    cp ../../${template_pkg}/${last_version_p}.ebuild ${pn}-${ver}.ebuild || exit 1
+
+    einfo "Created ${pkg}/${pn}-${ver}.ebuild from ${template_pkg}/${last_version_p}.ebuild. Please edit as needed."
+elif [[ -f ${pkg}/${pn}-${ver}.ebuild ]] ; then
+    # Does this version already exist?
+    ewarn "${pn}-${ver}.ebuild already exists! Skipping creation."
+else
+    mkdir -p ${pkg} || exit 1
+    cd ${pkg} || exit 1
+
+    # Already exists
+    last_version_p=$(get_last_version ${pkg} ${ver})
+
+    cp ${last_version_p}.ebuild ${pn}-${ver}.ebuild || exit 1
+
+    einfo "Created ${pkg}/${pn}-${ver}.ebuild. Please edit as needed."
+fi
