@@ -1,6 +1,7 @@
 #!/bin/bash
 # TODO: could add guessed subdir into S in ebuild?
 # TODO: handle licensing
+# TODO: handle where a vendor dir alraedy exists
 . /lib/gentoo/functions.sh
 
 ORIGINAL_PWD=$(pwd)
