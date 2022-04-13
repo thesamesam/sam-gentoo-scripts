@@ -4,9 +4,10 @@
 # TODO: handle where a vendor dir alraedy exists
 . /lib/gentoo/functions.sh
 
+SCRIPT_DIR=~/git/sam-gentoo-scripts/
 ORIGINAL_PWD=$(pwd)
 
-$(portageq get_repo_path ${EROOT:-/} overlay)/scripts/bump-generic $@ || exit 1
+${SCRIPT_DIR}/maint/bump-generic $@ || exit 1
 
 cd ${1} || exit 1
 
