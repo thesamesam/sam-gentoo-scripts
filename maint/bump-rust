@@ -3,9 +3,10 @@
 # TODO: handle licensing
 . /lib/gentoo/functions.sh
 
+SCRIPT_DIR=~/git/sam-gentoo-scripts/
 ORIGINAL_PWD=$(pwd)
 
-~/git/sam-gentoo-scripts/maint/bump-generic $@ || exit 1
+${SCRIPT_DIR}/maint/bump-generic $@ || exit 1
 
 cd ${1} || exit 1
 
