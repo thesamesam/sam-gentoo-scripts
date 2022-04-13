@@ -20,6 +20,21 @@ ebuild=${pn}-${2}.ebuild
 einfo "Sedding out 'deps' tarball line if exists"
 sed -i -e "/^SRC_URI.*deps/ s/^/#/" ${ebuild} || exit 1
 
+einfo "Sedding out 'EGO_SUM' lines if they exist"
+if grep -q "EGO_SUM" ${ebuild} ; then
+        if grep -qe 'EGO_SUM".*"' ${ebuild} ; then
+                sed -i -e '/EGO_SUM/d' ${ebuild} || exit 1
+        else
+                sed -i -e '/EGO_SUM=(/,/)/d' ${ebuild} || exit 1
+        fi
+
+	sed -i -e '/EGO_SUM_SRC_URI/d' ${ebuild} || die
+	sed -i -e '/go-module_set_globals/d' ${ebuild} || die
+
+	# Add in our -deps line (commented)
+	sed -i -e "/^SRC_URI=/a#SRC_URI+=\" \${P}-deps.tar.xz\"" ${ebuild} || exit 1
+fi
+
 # 2. Fetch!
 einfo "Fetching ${1}-${2}"
 ebuild ${ebuild} manifest || exit 1
