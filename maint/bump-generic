@@ -13,7 +13,7 @@ get_last_version() {
         last_version_cpv=$(portageq best_visible "${EROOT:-/}" "<${cpn}-${ver}")
     fi
 
-    last_version_p=$(qatom -F "%{P}" ${last_version_cpv})
+    last_version_p=$(qatom -F "%{PF}" ${last_version_cpv})
 
     echo ${last_version_p}
 }
