@@ -104,7 +104,7 @@ check_commits() {
 
 			[[ ${debug} -eq 1 ]] && echo "Checking in ${dir}..."
 
-			egrep -qe "${maintainers}" "${dir}"/metadata.xml
+			grep -E -qe "${maintainers}" "${dir}"/metadata.xml
 			if [[ $? -eq 0 ]] ; then
 				target_maintainer=$(get_action 1)
 			else

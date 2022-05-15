@@ -42,7 +42,7 @@ for dir in ${dirs[@]} ; do
 	fi
 
 	if ! [[ -z ${maintainers} ]] ; then
-		egrep -qe "${maintainers}" "${dir}"/metadata.xml
+		grep -E -qe "${maintainers}" "${dir}"/metadata.xml
 		if [[ $? -eq 0 ]] ; then
 			[[ ${debug} -eq 1 ]] && echo "Skipping ${dir}";
 			continue
