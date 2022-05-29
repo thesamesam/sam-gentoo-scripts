@@ -4,41 +4,38 @@
 # TODO: could factor some of it out a bit better to allow use for things
 # other than pkgcheck.
 
-. /lib/gentoo/functions.sh
-
 connection="gentoo"
 # For testing, may wish to use NATTkA's test Bugzilla instance (Docker container)
 # https://github.com/mgorny/nattka/tree/master/test/bugzilla-instance
 #connection="gentoo-test"
 
 # Used as 'pkgcheck scan -k ...'
-pkgcheck_warning="VariableScope"
+#pkgcheck_warning="BinaryFile"
+#pkgcheck_warning="DeprecatedEclass"
+pkgcheck_warning="PythonCompatUpdate"
+#pkgcheck_warning="DeprecatedEclassVariable"
 # This gets prefixed with 'package: '
-bug_summary="uses variables banned in scope (${pkgcheck_warning})"
-bug_description="This package uses variables banned in some scopes. This may stop working in future versions of Portage."
+#bug_summary="uses binary files in repository (${pkgcheck_warning})"
+#bug_summary="uses deprecated Go eclass (${pkgcheck_warning})"
+bug_summary="needs upgrade to Python 3.10 (${pkgcheck_warning})"
+bug_description="This package does not support Python 3.10. Please test it with Python 3.10 as a matter of urgency as the default will change in early June, as per message on gentoo-dev: https://archives.gentoo.org/gentoo-dev/message/13aa993921f19b6b095297721ffb0d0b. Ask in #gentoo-python on IRC if need any help."
+#bug_description="This package uses a deprecated Go eclass. It must be migrated to go-module.eclass. Fixing this does not require a revbump as it'll already be successfully installed."
+#bug_description="This package uses the deprecated EGO_SUM go-module.eclass variable. It must be migrated to dep tarballs (see eclassdocs) or vendored deps if upstream provide them."
+#bug_description="This package has binary files in files/. These must uploaded to e.g. dev.gentoo.org and downloaded in the ebuild to save space."
 # All filed bugs will block this tracker
-bug_tracker=775191
+bug_tracker=823185
+#bug_tracker=1
 
 bad_files=$(pkgcheck scan -k ${pkgcheck_warning} -R FormatReporter --format "{category}/{package}")
-#bad_files=$(sort -u /tmp/bad_pkgs)
+#bad_files=$(sort /tmp/bad_pkgs2)
 
 get_maintainers() {
 	local pkg=${1}
 	local maintainers
 
-	maintainer_metadata=$(pquery ${bad_package} --one-attr="maintainers" | head -n1)
-	# Normally, format looks like: Maintainer A <a@gentoo.org> Maintainer B <b@gentoo.org> ...
-	# We want to just capture the emails (<a@gentoo.org> <b@gentoo.org>)
-	# Regex: ((?<=<)(.*?)(?=>)
-	#
-        # But if not all maintainers have names, it might look like:
-        # Maintainer A <a@gentoo.org> b@gentoo.org
-	# Regex: \b([A-z0-9]+)@gentoo.org
-	#
-	# Then we just combine the both with (a|b).
-	maintainer_metadata=$(echo ${maintainer_metadata} | grep -Po "((?<=<)(.*?)(?=>)|\b([A-z0-9]+)@gentoo.org)")
+	maintainer_metadata=$(xmllint --xpath "//pkgmetadata/maintainer/email/text()" ${1}/metadata.xml)
 
-	if [[ -z ${maintainer_metadata} ]] ; then
+	if [[ -z ${maintainer_metadata} ]] || grep -q "XPath set is empty" ${maintainer_metadata}; then
 		maintainer_metadata="maintainer-needed@gentoo.org"
 	fi
 
@@ -61,6 +58,9 @@ report_bug() {
 		[[ -n ${@} ]] && einfo "CC: ${@}"
 	)
 
+	#assignee="test@example.com"
+	#set -x
+
 	bugz_output=$(bugz \
 		--connection ${connection} \
 		post \
@@ -69,38 +69,64 @@ report_bug() {
 		--component "Current packages" \
 		--version unspecified \
 		--op-sys All \
+		--cc="$(IFS=,; echo ${@})" \
 		--platform All \
 		-a "${assignee}" \
-		--cc="$(IFS=,; echo ${@})" \
 		-t "${package}: ${bug_summary}" \
 		-d "${bug_description}" \
 		--append-command "pkgcheck scan -k ${pkgcheck_warning} ${package}")
 
+	echo "${bugz_output[@]}"
+
 	bug_id=$(echo "${bugz_output[@]}" | tail -n1)
 	# Output looks like:  * Info: Bug 26 submitted
 	# We want just the bug number
-	bug_id=$(echo ${bug_id} | grep -Po "([0-9]+)")
+	bug_id=$(echo "${bug_id}" | grep "Info: Bug" | grep -Po "([0-9]+)")
 
 	echo "Reported bug: ${bug_id}"
 	# bugz won't let us add a blocker at point of creation, so modify
 	# the bug we just made to add it a blocker on the tracker.
-	bugz \
-		--connection ${connection} \
-		modify \
-		--add-blocked ${bug_tracker} \
-		${bug_id}
+	if [[ -n ${bug_tracker} ]] ; then
+		bugz \
+			--connection ${connection} \
+			modify \
+			--add-blocked ${bug_tracker} \
+			${bug_id}
+	fi
+
+	eoutdent
 }
 
+seen_packages=()
+
+source /usr/lib/gentoo/functions.sh
+
 for bad_package in ${bad_files[@]} ; do
-	(
-		einfo "Found bad package: ${bad_package}"
-		eindent
+	einfo "Found bad package: ${bad_package}"
+	eindent
 
-		einfo "Maintainers:"
-		eindent
-		get_maintainers ${bad_package}
-		maintainers=$(get_maintainers ${bad_package})
+	seen_before=$(echo ${seen_packages[@]} | grep -o "${bad_package}" | wc -w)
+	if ! [[ ${seen_before} -eq 0 ]] ; then
+		ewarn "Skipping. Seen ${bad_package} before."
+		eoutdent
+		continue
+	fi
 
-		report_bug ${bad_package} ${maintainers[@]}
-	)
+	# As a hack, for the Python stuff, I fetched https://qa-reports.gentoo.org/output/gpyutils/39-to-310.txt
+	# as /tmp/pylist and had it check against it.
+	#if ! grep -E -qrsin "^${bad_package}$" /tmp/pylist ; then
+	#	eoutdent
+	#	continue
+	#fi
+
+        seen_packages+=( ${bad_package} )
+
+	einfo "Maintainers:"
+	eindent
+	get_maintainers ${bad_package}
+	maintainers=$(get_maintainers ${bad_package})
+
+	report_bug ${bad_package} ${maintainers[@]}
+	eoutdent
+	eoutdent
 done
