@@ -5,9 +5,7 @@
 # package maintainer(s) (or not)
 
 # Usage:
-# - git checkout -b filtered
-# - git reset --hard ${base}
-# - bash ~/scripts/rebase-filter
+# Run this script from the branch that you need to filter.
 
 # Configuration:
 # - maintainers: regex of maintainers to filter for/out
@@ -19,17 +17,54 @@
 # - continue_on_error: give a list of commits which need rebasing at the end
 # - debug: noisy or not?
 
-maintainers="(some-project-to-treat-specially)"
+# Retain these values as defaults
 mode="blacklist"
 base="origin/master"
-minefield="misc"
+minefield=$(git rev-parse --abbrev-ref HEAD)
 create_branches=1
 create_branches_inverse=0
 continue_on_error=0
 sorted=1
-debug=1
+debug=0
 
-#
+usage() {
+	echo "Usage: rebase-filter-maint [ -b | --blacklist] [ -c | --create-branches ] [ -d | --debug ] [ -m | --maintainers python@ ] --minefield branch-to-filter [ -s | --source-branch origin/master ] [ -w | --whitelist ]"
+	exit 2
+}
+
+parsed_args=$(getopt -a -n rebase-filter-maint -o bcdm:s:w --long blacklist,create-branches,debug,maintainers:,minefield:,source-branch:,whitelist -- "$@")
+eval set -- "$parsed_args"
+while :
+do
+	case "$1" in
+		-b | --blacklist ) mode="blacklist" ; shift ;;
+		-c | --create-branches ) create_branches=1 ; shift ;;
+		-d | --debug ) debug=1; shift ;;
+		-m | --maintainers ) maintainers="$2" ; shift 2 ;;
+		--minefield ) minefield="$2" ; shift 2 ;;
+		-s | --source-branch ) base="$2" ; shift 2 ;;
+		-w | --whitelist ) mode="whitelist" ; shift ;;
+		-- ) shift ; break ;;
+		*)  echo "Unexpected option: $1"
+		    usage ;;
+	esac
+done
+
+if [[ -z ${maintainers// } ]]; then
+	echo "Either set the 'maintainers' envvar or specify --maintainers."
+	exit 1
+elif [[ $debug -eq 1 ]]; then
+	echo "Maintainers Regex set to '${maintainers}'"
+fi
+
+# Ensure that $base is clean
+git reset --hard $base
+
+# Make sure that we're not somewhere deep within the repo to simplify the rest of the script
+# Doesn't hurt anything if we're already there.
+cd $(git rev-parse --show-toplevel)
+
+# Initialise a few variables
 skipped_commits=()
 error_commits_whitelist=()
 error_commits_blacklist=()
