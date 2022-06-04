@@ -4,10 +4,15 @@
 # TODO: handle where a vendor dir alraedy exists
 . /lib/gentoo/functions.sh
 
-SCRIPT_DIR=~/git/sam-gentoo-scripts/
+if [[ ${BASH_SOURCE} = */* ]]; then
+	SCRIPT_DIR=${BASH_SOURCE%/*}/
+else
+	SCRIPT_DIR=./
+fi
+
 ORIGINAL_PWD=$(pwd)
 
-${SCRIPT_DIR}/maint/bump-generic $@ || exit 1
+${SCRIPT_DIR}/bump-generic $@ || exit 1
 
 cd ${1} || exit 1
 
