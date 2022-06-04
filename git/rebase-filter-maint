@@ -177,7 +177,7 @@ check_commits() {
 
 if [[ ${create_branches} -eq 1 ]] ; then
 	# Generate a 'unique' identifier
-	identifier=$(openssl rand -hex 5)
+	identifier=${minefield}-$(openssl rand -hex 5)
 
 	# Create a branch (or branches as requested)
 	git branch ${identifier}-${mode} ${base}

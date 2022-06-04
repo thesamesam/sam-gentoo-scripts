@@ -54,10 +54,19 @@ $ cd ~/git/gentoo
 $ git checkout my-large-change-set
 # Make your changes!
 # Configure the script as appropriate
-$ bash ~/scripts/rebase-filter-maint
-$ git checkout my-large-change-set-identifier-whitelist
+$ bash ~/scripts/rebase-filter-maint --maintainer «maintainer regex»
 $ git checkout my-large-change-set-identifier-blacklist
 ```
+
+The `maintainer regex` may also be provided by providing the `maintainers` envvar before the script is called.
+
+By default the script will operate on your working branch. This may be changed by passing `--minefield «branch name»`
+
+The default configuration is to blacklist commits (i.e. cherry pick everything that doesn't match your regex). The inverse can be achieved by providing the `--whitelist` flag.
+
+> **Note**:
+> - The script does not currently handle passing both `--whitelist` and `--blacklist`; results may be unpredictable.
+> - When run this script **will** perform a `git reset` on `origin/master`.
 
 ##### Example (whitelist)
 Our branch is `controversial` with a load of changes some people might
