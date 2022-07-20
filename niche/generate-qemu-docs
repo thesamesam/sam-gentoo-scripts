@@ -4,22 +4,24 @@
 
 ebuild=${1}
 version=$(atomf "%V" "${ebuild/.ebuild}")
+category=$(atomf "%c" "${ebuild/.ebuild}")
 pf=$(atomf "%n%v%r" "${ebuild/.ebuild}")
+pn=$(atomf "%n" "${ebuild/.ebuild}")
 
 QEMU_DOCS_PREBUILT=0 USE=doc ebuild ${1} manifest clean compile
 
 dir=$(mktemp -d)
-mkdir "${dir}"/qemu-${version}-docs
+mkdir "${dir}"/${pn}-${version}-docs
 
-ebegin "Copying docs to ${dir}/qemu-7.0.0-docs"
-cp -ra /var/tmp/portage/app-emulation/${pf}/work/qemu-*/tools-build/docs "${dir}"/qemu-${version}-docs/
+ebegin "Copying docs to ${dir}/${pn}-${version}-docs"
+cp -ra /var/tmp/portage/${category}/${pf}/work/${pn}-*/tools-build/docs "${dir}"/${pn}-${version}-docs/
 eend $? || exit 1
 
 # We don't want the HTML docs
-rm -rf /var/tmp/portage/app-emulation/${pf}/work/qemu-*/tools-build/docs/manual
+rm -rf /var/tmp/portage/${category}/${pf}/work/${pn}-*/tools-build/docs/manual
 
 ebegin "Creating tarball"
-tar -caf "${dir}"/qemu-${version}-docs.tar.xz -C "${dir}" qemu-${version}-docs/
+tar -caf "${dir}"/${pn}-${version}-docs.tar.xz -C "${dir}" ${pn}-${version}-docs/
 eend $? || exit 1
 
-einfo "Tarball at ${dir}/qemu-${version}-docs.tar.xz"
+einfo "Tarball at ${dir}/${pn}-${version}-docs.tar.xz"
