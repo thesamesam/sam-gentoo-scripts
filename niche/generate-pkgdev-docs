@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+. /lib/gentoo/functions.sh
+. /usr/share/iwdevtools/atomf.bashlib
+
+ebuild=${1}
+version=$(atomf "%V" "${ebuild/.ebuild}")
+pf=$(atomf "%n%v%r" "${ebuild/.ebuild}")
+
+PKGDEV_DOCS_PREBUILT=0 USE=doc ebuild ${1} clean compile
+
+dir=$(mktemp -d)
+mkdir "${dir}"/pkgdev-${version}-docs
+
+ebegin "Copying docs to ${dir}/pkgdev-${version}-docs"
+cp -ra /var/tmp/portage/dev-util/${pf}/work/pkgdev-*/man "${dir}"/pkgdev-${version}-docs/
+eend $? || exit 1
+
+ebegin "Creating tarball"
+tar -caf "${dir}"/pkgdev-${version}-docs.tar.xz -C "${dir}" pkgdev-${version}-docs/
+eend $? || exit 1
+
+einfo "Tarball at ${dir}/pkgdev-${version}-docs.tar.xz"

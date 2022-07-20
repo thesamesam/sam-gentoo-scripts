@@ -27,6 +27,8 @@ A collection of scripts for Gentoo development.
 
 * `generate-qemu-docs`: generate man page tarball for `app-emulation/qemu`
 
+* `generate-pkgdev-docs`: generate man page tarball for `dev-util/pkgdev`
+
 ### git
 
 #### Assorted scripts
