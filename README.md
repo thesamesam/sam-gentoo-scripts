@@ -23,6 +23,10 @@ A collection of scripts for Gentoo development.
   for all arches. This sometimes happens and is forgotten about after committing
   something "unkeyworded for testing".
 
+#### Niche
+
+* `generate-qemu-docs`: generate man page tarball for `app-emulation/qemu`
+
 ### git
 
 #### Assorted scripts
