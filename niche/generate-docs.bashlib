@@ -7,7 +7,7 @@ generate-docs_setup_environment() {
 
 	# We don't want to compress the man pages ourselves
 	export PORTAGE_COMPRESS_EXCLUDE_SUFFIXES=".*"
-	export PORTAGE_TMPDIR=${PORTAGE_TMPDIR:-/tmp/sam-gentoo-scripts/${0##*/}}
+	export PORTAGE_TMPDIR=${PORTAGE_TMPDIR:-/tmp/${0##*/}}
 	export PORTAGE_USERNAME="$(whoami)"
 	export PORTAGE_WORKDIR_MODE="775"
 	export XZ_DEFAULTS="-9 -T 0"
