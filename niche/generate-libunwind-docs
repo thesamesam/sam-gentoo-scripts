@@ -7,8 +7,6 @@ fi
 
 . ${SCRIPT_DIR}/generate-docs.bashlib
 
-atomset ${1}
-
 export LIBUNWIND_DOCS_PREBUILT=0
 
 generate-docs_copy_docs() {

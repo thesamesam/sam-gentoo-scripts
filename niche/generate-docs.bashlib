@@ -3,6 +3,8 @@
 . "$(pkg-config iwdevtools --variable=atomf)" || exit
 
 generate-docs_setup_environment() {
+	atomset ${1}
+
 	# We don't want to compress the man pages ourselves
 	export PORTAGE_COMPRESS_EXCLUDE_SUFFIXES=".*"
 	export PORTAGE_TMPDIR=${PORTAGE_TMPDIR:-/tmp/sam-gentoo-scripts/${0##*/}}
