@@ -29,11 +29,10 @@ generate-docs_setup_environment() {
 
 
 generate-docs_copy_docs() {
-        ebegin "Copying docs to ${dir}/${P}-docs"
-        cp -r "${D}"/usr/share/man*/* "${dir}"/${P}-docs/
-        eend ${?} || { eerror "Copying docs failed!" ; exit 1 ; }
+	ebegin "Copying docs to ${dir}/${P}-docs"
+	cp -r "${D}"/usr/share/man*/* "${dir}"/${P}-docs/
+	eend ${?} || { eerror "Copying docs failed!" ; exit 1 ; }
 }
-
 
 generate-docs_create_tarball() {
 	ebegin "Creating tarball"
