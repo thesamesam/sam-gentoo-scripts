@@ -5,7 +5,7 @@ else
 	SCRIPT_DIR=./
 fi
 
-. ${SCRIPT_DIR}/generate-docs.bashlib
+. ${SCRIPT_DIR}/generate-docs.bashlib || { echo "Failed to source generate-docs.bashlib!" ; exit 1 ; }
 
 export PKGDEV_DOCS_PREBUILT=0
 

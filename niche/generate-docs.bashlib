@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-. /lib/gentoo/functions.sh
-. "$(pkg-config iwdevtools --variable=atomf)" || exit
+. /lib/gentoo/functions.sh || { echo "Failed to source functions.sh!" ; exit 1 ; }
+. "$(pkg-config iwdevtools --variable=atomf)" || { echo "Failed to source iwdevtools' atomf!" ; exit 1 ; }
 
 generate-docs_setup_environment() {
-	atomset ${1}
+	atomset ${1} || { eerror "Failed to run: 'atomset ${1}'. Exiting!" ; exit 1 ; }
 
 	# We don't want to compress the man pages ourselves
 	export PORTAGE_COMPRESS_EXCLUDE_SUFFIXES=".*"
@@ -12,11 +12,11 @@ generate-docs_setup_environment() {
 	export PORTAGE_WORKDIR_MODE="775"
 	export XZ_DEFAULTS="-9 -T 0"
 
-	sudo USE=doc emerge -q1o =${PF}
+	sudo USE=doc emerge -q1o =${PF} || { eerror "Installing doc dependencies for =${PF} failed! Exiting!" ; exit 1 ; }
 
 	# We need this to flush out a previous doc entry from a failed attempt
 	USE=doc ebuild ${1} manifest
-	USE=doc ebuild ${1} clean compile install
+	USE=doc ebuild ${1} clean compile install || { eerror "Failed to build ${1} with USE=doc. Exiting!" ; exit 1 ; }
 
 	D="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/image
 	WORKDIR="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/work
@@ -24,13 +24,13 @@ generate-docs_setup_environment() {
 	S=$(sed -nr 's/^declare -x S="(.*)"/\1/p' "${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/temp/environment)
 
 	dir=$(mktemp -d)
-	mkdir "${dir}"/${P}-docs
+	mkdir "${dir}"/${P}-docs || { eerror "Creating ${dir}/${P}-docs failed. Exiting!" ; exit 1 ; }
 }
 
 generate-docs_copy_docs() {
 	ebegin "Copying docs to ${dir}/${P}-docs"
 	cp -ra "${S}"/tools-build/docs "${dir}"/${P}-docs/
-	eend $? || exit 1
+	eend $? || { eerror "Copying docs failed!" ; exit 1 ; }
 
 	# We don't want the HTML docs
 	rm -rf "${S}"/tools-build/docs/manual
@@ -39,7 +39,7 @@ generate-docs_copy_docs() {
 generate-docs_create_tarball() {
 	ebegin "Creating tarball"
 	tar -caf "${dir}"/${P}-docs.tar.xz -C "${dir}" ${P}-docs/
-	eend ${?} || exit 1
+	eend ${?} || { eerror "Creating tarball failed!" ; exit 1 ; }
 
 	einfo "Tarball at ${dir}/${P}-docs.tar.xz"
 }
