@@ -36,6 +36,11 @@ generate-docs_copy_docs() {
 
 generate-docs_create_tarball() {
 	ebegin "Creating tarball"
+
+	# Embed generate-docs.bashlib and the generate-${PN}-docs script
+	# within the tarball for posterity.
+	cp {${0},$(dirname ${BASH_SOURCE}/generate-docs.bashlib)} "${dir}"/${P}-docs/ || { eerror "Failed to embed script within tarball. Exiting!" ; exit 1 ; }
+
 	tar -caf "${dir}"/${P}-docs.tar.xz -C "${dir}" ${P}-docs/
 	eend ${?} || { eerror "Creating tarball failed!" ; exit 1 ; }
 
