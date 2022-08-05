@@ -12,11 +12,11 @@ generate-docs_setup_environment() {
 	export PORTAGE_WORKDIR_MODE="775"
 	export XZ_DEFAULTS="-9 -T 0"
 
-	sudo USE=doc emerge -q1o =${PF} || { eerror "Installing doc dependencies for =${PF} failed! Exiting!" ; exit 1 ; }
+	sudo USE="doc man" emerge -q1o =${PF} || { eerror "Installing doc dependencies for =${PF} failed! Exiting!" ; exit 1 ; }
 
 	# We need this to flush out a previous doc entry from a failed attempt
-	USE=doc ebuild ${1} manifest
-	USE=doc ebuild ${1} clean compile install || { eerror "Failed to build ${1} with USE=doc. Exiting!" ; exit 1 ; }
+	USE="doc man" ebuild ${1} manifest
+	USE="doc man" ebuild ${1} clean compile install || { eerror "Failed to build ${1} with USE='doc man'. Exiting!" ; exit 1 ; }
 
 	D="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/image
 	WORKDIR="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/work
