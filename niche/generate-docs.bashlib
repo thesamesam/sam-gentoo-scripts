@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+. /lib/gentoo/functions.sh
+. "$(pkg-config iwdevtools --variable=atomf)" || exit
+
+generate-docs_setup_environment() {
+	# We don't want to compress the man pages ourselves
+	export PORTAGE_COMPRESS_EXCLUDE_SUFFIXES=".*"
+	export PORTAGE_TMPDIR=${PORTAGE_TMPDIR:-/tmp/sam-gentoo-scripts/${0##*/}}
+	export XZ_DEFAULTS="-9 -T 0"
+
+	sudo USE=doc emerge -q1o =${PF}
+
+	# We need this to flush out a previous doc entry from a failed attempt
+	USE=doc ebuild ${1} manifest
+	USE=doc ebuild ${1} clean compile install
+
+	D="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/image
+	WORKDIR="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/work
+	# Borrowed from mgorny-dev-tools' pkgdiff
+	S=$(sed -nr 's/^declare -x S="(.*)"/\1/p' "${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/temp/environment)
+
+	dir=$(mktemp -d)
+	mkdir "${dir}"/${P}-docs
+}
+
+generate-docs_copy_docs() {
+	ebegin "Copying docs to ${dir}/${P}-docs"
+	cp -ra "${S}"/tools-build/docs "${dir}"/${P}-docs/
+	eend $? || exit 1
+
+	# We don't want the HTML docs
+	rm -rf "${S}"/tools-build/docs/manual
+}
+
+generate-docs_create_tarball() {
+	ebegin "Creating tarball"
+	tar -caf "${dir}"/${P}-docs.tar.xz -C "${dir}" ${P}-docs/
+	eend ${?} || exit 1
+
+	einfo "Tarball at ${dir}/${P}-docs.tar.xz"
+}
+
+generate-docs() {
+	generate-docs_setup_environment $@
+	generate-docs_copy_docs $@
+	generate-docs_create_tarball $@
+}

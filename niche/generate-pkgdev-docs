@@ -1,36 +1,20 @@
 #!/usr/bin/env bash
-. /lib/gentoo/functions.sh
-. "$(pkg-config iwdevtools --variable=atomf)" || exit
+if [[ ${BASH_SOURCE} = */* ]]; then
+        SCRIPT_DIR=${BASH_SOURCE%/*}/
+else
+        SCRIPT_DIR=./
+fi
+
+. ${SCRIPT_DIR}/generate-docs.bashlib
 
 atomset ${1}
 
 export PKGDEV_DOCS_PREBUILT=0
 
-# We don't want to compress the man pages ourselves
-export PORTAGE_COMPRESS_EXCLUDE_SUFFIXES=".*"
-export PORTAGE_TMPDIR=${PORTAGE_TMPDIR:-/tmp/sam-gentoo-scripts/${0##*/}}
-export XZ_DEFAULTS="-9 -T 0"
+generate-docs_copy_docs() {
+	ebegin "Copying docs to ${dir}/${P}-docs"
+	cp -r "${S}"/man "${dir}"/${P}-docs/
+	eend $? || exit 1
+}
 
-sudo USE=doc emerge -q1o =${PF}
-
-# We need this to flush out a previous doc entry from a failed attempt
-USE=doc ebuild ${1} manifest
-USE=doc ebuild ${1} clean compile install
-
-D="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/image
-WORKDIR="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/work
-# Borrowed from mgorny-dev-tools' pkgdiff
-S=$(sed -nr 's/^declare -x S="(.*)"/\1/p' "${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/temp/environment)
-
-dir=$(mktemp -d)
-mkdir "${dir}"/${P}-docs
-
-ebegin "Copying docs to ${dir}/${P}-docs"
-cp -r "${S}"/man "${dir}"/${P}-docs/
-eend $? || exit 1
-
-ebegin "Creating tarball"
-tar -caf "${dir}"/${P}-docs.tar.xz -C "${dir}" ${P}-docs/
-eend ${?} || exit 1
-
-einfo "Tarball at ${dir}/${P}-docs.tar.xz"
+generate-docs $@
