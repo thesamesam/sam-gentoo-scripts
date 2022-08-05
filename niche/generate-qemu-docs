@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 if [[ ${BASH_SOURCE} = */* ]]; then
-        SCRIPT_DIR=${BASH_SOURCE%/*}/
+	SCRIPT_DIR=${BASH_SOURCE%/*}/
 else
-        SCRIPT_DIR=./
+	SCRIPT_DIR=./
 fi
 
 . ${SCRIPT_DIR}/generate-docs.bashlib
