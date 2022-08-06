@@ -25,6 +25,10 @@ A collection of scripts for Gentoo development.
 
 #### Niche
 
+* `generate-cmake-docs`: generate man page tarball for `dev-util/cmake`
+
+* `generate-libunwind-docs`: generate man page tarball for `sys-libs/libunwind`
+
 * `generate-qemu-docs`: generate man page tarball for `app-emulation/qemu`
 
 * `generate-pkgdev-docs`: generate man page tarball for `dev-util/pkgdev`
