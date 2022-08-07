@@ -9,6 +9,7 @@ if [[ ${BASH_SOURCE} = */* ]]; then
 else
         SCRIPT_DIR=./
 fi
+
 ORIGINAL_PWD=$(pwd)
 
 ${SCRIPT_DIR}/bump-generic $@ || exit 1
