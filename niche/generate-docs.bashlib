@@ -27,7 +27,6 @@ generate-docs_setup_environment() {
 	mkdir "${dir}"/${P}-docs || { eerror "Creating ${dir}/${P}-docs failed. Exiting!" ; exit 1 ; }
 }
 
-
 generate-docs_copy_docs() {
 	ebegin "Copying docs to ${dir}/${P}-docs"
 	cp -r "${D}"/usr/share/man*/* "${dir}"/${P}-docs/
@@ -48,7 +47,7 @@ generate-docs_create_tarball() {
 }
 
 generate-docs() {
-	generate-docs_setup_environment $@
-	generate-docs_copy_docs $@
-	generate-docs_create_tarball $@
+	generate-docs_setup_environment "$@"
+	generate-docs_copy_docs "$@"
+	generate-docs_create_tarball "$@"
 }
