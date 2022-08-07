@@ -23,6 +23,17 @@ A collection of scripts for Gentoo development.
   for all arches. This sometimes happens and is forgotten about after committing
   something "unkeyworded for testing".
 
+### Maintenance
+
+* `bump-generic`: bumps package to new version, copying from last visible
+   version in the repository. Used as a basis for other scripts too.
+
+* `bump-go`: bumps Go package to a new version (generates dependency tarball
+   for you).
+
+* `bump-rust`: bumps Rust package to a new version (generates CRATES variable
+   contents for you).
+
 #### Niche
 
 * `generate-cmake-docs`: generate man page tarball for `dev-util/cmake`
