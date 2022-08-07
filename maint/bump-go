@@ -12,9 +12,9 @@ else
 fi
 
 ORIGINAL_PWD=$(pwd)
-# Make reproducable tarballs. go mod download does not preserve timestamps,
+# Make reproducible tarballs. go mod download does not preserve timestamps,
 # so clobber them; sort inputfiles; set ownership to something Gentoo-neutral.
-REPRODUCABLE_TAR_ARGS="--mtime="${SOURCE_DATE_EPOCH:-1970-01-01}" --sort=name --owner=portage --group=portage"
+REPRODUCIBLE_TAR_ARGS="--mtime="${SOURCE_DATE_EPOCH:-1970-01-01}" --sort=name --owner=portage --group=portage"
 
 ${SCRIPT_DIR}/bump-generic $@ || exit 1
 cd ${1} || exit 1
@@ -90,7 +90,7 @@ ebegin "Creating tarball"
     # Find the (sub)dir we used earlier, even if it was a subdir we guessed
     cd $(find . -maxdepth 2 -type d -name '*go-mod*' -print -quit || exit 1)/.. || exit 1
 
-    tar ${REPRODUCABLE_TAR_ARGS} -acf ${P}-deps.tar.xz go-mod || exit 1
+    tar ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz go-mod || exit 1
 
     mv ${P}-deps.tar.xz $(portageq distdir)/ || exit 1
 ) || { eend $? ; exit 1; }
