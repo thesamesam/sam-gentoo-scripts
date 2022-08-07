@@ -10,12 +10,14 @@ fi
 export QEMU_DOCS_PREBUILT=0
 
 generate-docs_copy_docs() {
+	ebegin "Deleting HTML docs"
+	# We don't want the HTML docs
+	rm -rf "${S}"/tools-build/docs/manual
+	eend $? || exit 1
+
 	ebegin "Copying docs to ${dir}/${P}-docs"
 	cp -ra "${S}"/tools-build/docs "${dir}"/${P}-docs/
 	eend $? || exit 1
-
-	# We don't want the HTML docs
-	rm -rf "${S}"/tools-build/docs/manual
 }
 
 generate-docs $@
