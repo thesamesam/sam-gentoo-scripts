@@ -4,7 +4,7 @@
 . /lib/gentoo/functions.sh || { echo "Could not find gentoo-functions' functions.sh!" ; exit 1; }
 . "$(pkg-config iwdevtools --variable=atomf)" || { eerror "Could not find iwdevtools' atomf library! Emerge app-portage/iwdevtools?" ; exit 1; }
 
-if [[ ${BASH_SOURCE} = */* ]]; then
+if [[ ${BASH_SOURCE} == */* ]]; then
         SCRIPT_DIR=${BASH_SOURCE%/*}/
 else
         SCRIPT_DIR=./
@@ -12,7 +12,7 @@ fi
 
 ORIGINAL_PWD=$(pwd)
 
-${SCRIPT_DIR}/bump-generic $@ || exit 1
+${SCRIPT_DIR}/bump-generic "$@" || exit 1
 cd ${1} || exit 1
 atomset "${1}-${2}"
 

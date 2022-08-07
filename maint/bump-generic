@@ -20,12 +20,7 @@ get_last_version() {
     echo ${last_version_pf}
 }
 
-atomset "${1}-${2}"
-
-if [[ -z ${CATEGORY}/${PN} ]] ; then
-    eerror "No package given!"
-    exit 1
-fi
+atomset "${1}-${2}" || { eerror "atomset failed! Insufficient arguments? We need: ${0##*/} <CATEGORY/PN> <PV>" ; exit 1; }
 
 if [[ -z ${PV} ]] ; then
     eerror "No version given!"
