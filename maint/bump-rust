@@ -1,7 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # TODO: could add guessed subdir into S in ebuild?
 # TODO: handle licensing
-. /lib/gentoo/functions.sh
+. /lib/gentoo/functions.sh || { echo "Could not find gentoo-functions' functions.sh!" ; exit 1; }
+. "$(pkg-config iwdevtools --variable=atomf)" || { eerror "Could not find iwdevtools' atomf library! Emerge app-portage/iwdevtools?" ; exit 1; }
 
 if [[ ${BASH_SOURCE} = */* ]]; then
         SCRIPT_DIR=${BASH_SOURCE%/*}/
@@ -11,11 +12,10 @@ fi
 ORIGINAL_PWD=$(pwd)
 
 ${SCRIPT_DIR}/bump-generic $@ || exit 1
-
 cd ${1} || exit 1
+atomset "${1}-${2}"
 
-pn=$(pwd | rev | cut -d/ -f1 | rev)
-ebuild=${pn}-${2}.ebuild
+ebuild=${P}.ebuild
 
 # Now do the Rust-specific bits.
 #
@@ -34,20 +34,28 @@ fi
 sed -i -e '/^EAPI=.*/a\\nCRATES="${P}"' ${ebuild} || exit 1
 
 # 2. Fetch!
-einfo "Fetching ${1}-${2}"
+einfo "Fetching ${P}"
 ebuild ${ebuild} manifest || exit 1
 
 # 3. Unpack then fetch Rust deps
-einfo "Unpacking ${1}-${2}"
+einfo "Unpacking ${P}"
 
 # (We want to own this place)
-WORKDIR=$(mktemp -d || exit 1)
-PORTAGE_USERNAME="$(whoami)" PORTAGE_WORKDIR_MODE="775" PORTAGE_TMPDIR="${WORKDIR}" ebuild ${ebuild} clean unpack || exit 1
+export PORTAGE_TMPDIR="$(mktemp -d)"
+export PORTAGE_USERNAME="$(whoami)"
+export PORTAGE_WORKDIR_MODE="775"
+ebuild ${ebuild} clean unpack || exit 1
+
+# We need to export these for use in the subshells :(
+export D="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/image
+export WORKDIR="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/work
+# Borrowed from mgorny-dev-tools' pkgdiff
+export S=$(sed -nr 's/^declare -x S="(.*)"/\1/p' "${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/temp/environment)
 
 cmd='CARGO_HOME="${PWD}"/cargo-tmp cargo fetch'
 ebegin "Running '${cmd}'"
 (
-    cd "${WORKDIR}"/portage/${1}-${2}/work/${pn}-${2}/ || exit 1
+    cd "${S}" || exit 1
 
     if [[ ! -f Cargo.toml ]] ; then
         ewarn "No Cargo.toml in $(pwd)!"
@@ -67,7 +75,7 @@ ebegin "Running '${cmd}'"
 
 ebegin "Creating CRATES variable"
 (
-    cd "${WORKDIR}"/portage/${1}-${2}/work/${pn}-${2}/ || exit 1
+    cd "${S}" || exit 1
 
     # TODO: nullglob?
     crates=$(ls -1 cargo-tmp/registry/src/*)
@@ -76,7 +84,7 @@ ebegin "Creating CRATES variable"
 ) || { eend $? ; exit 1; }
 
 # Add CRATES back
-cd ${ORIGINAL_PWD}/${1} || exit 1
+cd ${ORIGINAL_PWD}/${CATEGORY}/${PN} || exit 1
 einfo "Adding CRATES to ebuild"
 
 # Drop the dummy line we added
@@ -92,4 +100,3 @@ einfo "Generating manifest"
 ebuild ${ebuild} clean manifest || exit 1
 
 einfo "All done."
-
