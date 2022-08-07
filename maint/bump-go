@@ -18,7 +18,17 @@ REPRODUCIBLE_TAR_ARGS="--mtime="${SOURCE_DATE_EPOCH:-1970-01-01}" --sort=name --
 # TODO: verify this doesn't interfere with reproducible tars?
 export XZ_DEFAULTS="-9 -T 0"
 
-${SCRIPT_DIR}/bump-generic "$@" || exit 1
+${SCRIPT_DIR}/bump-generic "$@" || {
+	case $? in
+		3)
+			ewarn "Continuing as re-generation of dep tarballs may be desired."
+			;;
+		*)
+			exit $?
+			;;
+	esac
+}
+
 cd ${1} || exit 1
 atomset "${1}-${2}"
 

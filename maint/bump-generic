@@ -1,7 +1,19 @@
 #!/usr/bin/env bash
 # TODO: merge this with ebump somehow?
+# Contraption to allow passing through indentation
+old_RC_DEFAULT_INDENT=${RC_DEFAULT_INDENT}
+
 . /lib/gentoo/functions.sh || { echo "Could not find gentoo-functions' functions.sh!" ; exit 1; }
 . "$(pkg-config iwdevtools --variable=atomf)" || { eerror "Could not find iwdevtools' atomf library! Emerge app-portage/iwdevtools?" ; exit 1; }
+
+RC_DEFAULT_INDENT=${old_RC_DEFAULT_INDENT:-${RC_DEFAULT_INDENT}}
+[[ -n ${RC_DEFAULT_INDENT} ]] && eindent ${RC_DEFAULT_INDENT}
+
+cleanup() {
+	[[ -z ${RC_DEFAULT_INDENT} ]] && eoutdent ${RC_DEFAULT_INDENT}
+}
+
+trap cleanup EXIT
 
 template_pkg=net-dns/dnsx
 
@@ -32,7 +44,7 @@ if [[ ! -d profiles/ ]] ; then
 	exit 1
 fi
 
-einfo "Bumping ${CATEGORY}/${PN} to ${PV}"
+[[ -n ${BUMP_GENERIC_QUIET} ]] || einfo "Bumping ${CATEGORY}/${PN} to ${PV}"
 
 # Is it a new package?
 if [[ ! -d ${CATEGORY}/${PN} ]] ; then
@@ -45,10 +57,11 @@ if [[ ! -d ${CATEGORY}/${PN} ]] ; then
 
 	cp ../../${template_pkg}/${last_version_p}.ebuild ${P}.ebuild || exit 1
 
-	einfo "Created ${CATEGORY}/${PN}/${P}.ebuild from ${template_pkg}/${last_version_p}.ebuild. Please edit as needed."
+	[[ -n ${BUMP_GENERIC_QUIET} ]] || einfo "Created ${CATEGORY}/${PN}/${P}.ebuild from ${template_pkg}/${last_version_p}.ebuild. Please edit as needed."
 elif [[ -f ${CATEGORY}/${PN}/${P}.ebuild ]] ; then
 	# Does this version already exist?
 	ewarn "${P}.ebuild already exists! Skipping creation."
+	exit 3
 else
 	mkdir -p ${CATEGORY}/${PN} || exit 1
 	cd ${CATEGORY}/${PN} || exit 1
@@ -56,7 +69,8 @@ else
 	# Already exists
 	last_version_p=$(get_last_version ${CATEGORY}/${PN} ${PV})
 
-	cp $(atomf "%n%v" ${last_version_p}).ebuild ${P}.ebuild || exit 1
+	cp $(atomf "%n%v%r" ${last_version_p}).ebuild ${P}.ebuild || exit 1
+	ekeyword ~all ${P}.ebuild || exit 1
 
-	einfo "Created ${CATEGORY}/${PN}/${P}.ebuild. Please edit as needed."
+	[[ -n ${BUMP_GENERIC_QUIET} ]] || einfo "Created ${CATEGORY}/${PN}/${P}.ebuild. Please edit as needed."
 fi

@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+. /lib/gentoo/functions.sh || { echo "Could not find gentoo-functions' functions.sh!" ; exit 1; }
+. "$(pkg-config iwdevtools --variable=atomf)" || { eerror "Could not find iwdevtools' atomf library! Emerge app-portage/iwdevtools?" ; exit 1; }
+
+if [[ ${BASH_SOURCE} == */* ]]; then
+	SCRIPT_DIR=${BASH_SOURCE%/*}/
+else
+	SCRIPT_DIR=./
+fi
+
+get_reverse_dependencies_by_eclass() {
+	local eclass=${1}
+
+	metadata_cache="$(portageq get_repo_path ${EROOT:-/} gentoo)/metadata/md5-cache"
+
+	while IFS= read -r line; do
+		echo $(atomf '%p' "${line##${metadata_cache}/}")
+	done < <(grep -rlw "INHERIT.*${eclass}" ${metadata_cache})
+}
+
+bump_packages() {
+	local packages=( "$@" )
+
+	einfo "Package list: ${packages[@]}"
+
+	eindent
+
+	local i=0
+	local package
+	# If we had to copy once for any of them, we probably need to do for
+	# all of them. Output looks better w/ blank line between but only for
+	# when we had to do an ewarn with extra layer.
+	local extra_line=no
+
+	for package in "${packages[@]}" ; do
+		i=$((i+1))
+
+		(
+			atomset "${package}-${version}"
+			ebegin "[${i}/${#packages[@]}] Bumping ${CATEGORY}/${PN} to ${PV}"
+
+			BUMP_GENERIC_QUIET=1 RC_DEFAULT_INDENT=4 "${SCRIPT_DIR}"/bump-generic ${CATEGORY}/${PN} ${PV}
+			case ${?} in
+				0)
+					# All fine.
+					;;
+				3)
+					# This means the file already existed, so ewarn was used.
+					extra_line=1
+					;;
+				*)
+					exit 1
+					;;
+			esac
+
+			# TODO: &>/dev/null b/c pkgdev doesn't seem to respect -q?
+			cd ${CATEGORY}/${PN} || exit 1
+			pkgdev manifest -q > /dev/null
+
+			eend $?
+			yesno ${extra_line} && echo || true
+		) || { eerror "Hit unexpected error: line ${LINENO}" ; exit 1 ; }
+	done
+
+	i=0
+	if yesno ${commit} ; then
+		for package in "${packages[@]}" ; do
+			i=$((i+1))
+
+			(
+				atomset "${package}-${version}"
+				ebegin "[${i}/${#packages[@]}] Committing ${CATEGORY}/${PN} at ${PV}"
+
+				cd ${CATEGORY}/${PN} || exit 1
+
+				# Unstage everything
+				git reset -q HEAD
+				git add Manifest ${P}.ebuild
+				# TODO: &>/dev/null b/c pkgdev doesn't seem to respect -q?
+				if git diff --quiet --cached --exit-code ; then
+					( eindent && ewarn "Skipping because no changes to commit..." )
+				else
+					pkgdev commit -q > /dev/null || { eindent ; eerror "Failed to commit? Check!" ; exit 1 ; }
+				fi
+
+				eend $?
+			) || { eerror "Hit unexpected error: line ${LINENO}" ; exit 1 ; }
+		done
+	fi
+
+	eoutdent
+}
+
+suite=${1}
+version=${2}
+commit=${3:-no}
+
+if [[ -z ${suite} ]] ; then
+	eerror "No suite given! Exiting."
+	exit 1
+elif [[ -z ${version} ]] ; then
+	eerror "No version given! Exiting."
+	exit 1
+fi
+
+einfo "${0##*/} settings:"
+(
+	eindent
+	einfo "Suite=${suite}"
+	einfo "Target version=${version}"
+	einfo "Commit=${commit}"
+)
+
+echo
+
+case ${suite} in
+	gstreamer)
+		# We can identify these via inherits.
+		bump_packages $(get_reverse_dependencies_by_eclass gstreamer-meson)
+		;;
+
+	watchman)
+		bump_packages dev-cpp/folly dev-cpp/edencommon dev-util/watchman
+		;;
+
+	*)
+		eerror "Unrecognised suite ${suite}! Maybe you want bump-generic? Exiting."
+		exit 127
+		;;
+esac
