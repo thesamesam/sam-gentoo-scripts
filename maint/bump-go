@@ -30,11 +30,11 @@ sed -i -e "/^SRC_URI.*deps/ s/^/#/" ${ebuild} || exit 1
 
 einfo "Sedding out 'EGO_SUM' lines if they exist"
 if grep -q "EGO_SUM" ${ebuild} ; then
-        if grep -qe 'EGO_SUM".*"' ${ebuild} ; then
-                sed -i -e '/EGO_SUM/d' ${ebuild} || exit 1
-        else
-                sed -i -e '/EGO_SUM=(/,/)/d' ${ebuild} || exit 1
-        fi
+	if grep -qe 'EGO_SUM".*"' ${ebuild} ; then
+		sed -i -e '/EGO_SUM/d' ${ebuild} || exit 1
+	else
+		sed -i -e '/EGO_SUM=(/,/)/d' ${ebuild} || exit 1
+	fi
 
 	sed -i -e '/EGO_SUM_SRC_URI/d' ${ebuild} || die
 	sed -i -e '/go-module_set_globals/d' ${ebuild} || die
@@ -65,34 +65,34 @@ export S=$(sed -nr 's/^declare -x S="(.*)"/\1/p' "${PORTAGE_TMPDIR}"/portage/${C
 cmd='GOMODCACHE="${PWD}"/go-mod go mod download -modcacherw'
 ebegin "Running '${cmd}'"
 (
-    cd "${S}" || exit 1
+	cd "${S}" || exit 1
 
-    if [[ ! -f go.mod ]] ; then
-        ewarn "No go.mod in $(pwd)!"
-        ewarn "Guessing first top-level subdir with go.mod?"
-        dirs=$(find . -maxdepth 1 -type d -print)
+	if [[ ! -f go.mod ]] ; then
+		ewarn "No go.mod in $(pwd)!"
+		ewarn "Guessing first top-level subdir with go.mod?"
+		dirs=$(find . -maxdepth 1 -type d -print)
 
-        for dir in ${dirs[@]} ; do
-            if [[ -f ${dir}/go.mod ]] ; then
-                einfo "Entering ${dir} which contains a go.mod file"
-                cd ${dir} || exit 1
-            fi
-        done || { eerror "Could not find any go.mod in top-level subdirs either!" ; exit 1; }
-    fi
+		for dir in ${dirs[@]} ; do
+			if [[ -f ${dir}/go.mod ]] ; then
+				einfo "Entering ${dir} which contains a go.mod file"
+				cd ${dir} || exit 1
+			fi
+		done || { eerror "Could not find any go.mod in top-level subdirs either!" ; exit 1; }
+	fi
 
-    eval "${cmd}" || exit 1
+	eval "${cmd}" || exit 1
 ) || { eend $? ; exit 1; }
 
 ebegin "Creating tarball"
 (
-    cd "${S}" || exit 1
+	cd "${S}" || exit 1
 
-    # Find the (sub)dir we used earlier, even if it was a subdir we guessed
-    cd $(find . -maxdepth 2 -type d -name '*go-mod*' -print -quit || exit 1)/.. || exit 1
+	# Find the (sub)dir we used earlier, even if it was a subdir we guessed
+	cd $(find . -maxdepth 2 -type d -name '*go-mod*' -print -quit || exit 1)/.. || exit 1
 
-    tar ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz go-mod || exit 1
+	tar ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz go-mod || exit 1
 
-    mv ${P}-deps.tar.xz $(portageq distdir)/ || exit 1
+	mv ${P}-deps.tar.xz $(portageq distdir)/ || exit 1
 ) || { eend $? ; exit 1; }
 
 # 4. Undo the sed we did earlier to the ebuild

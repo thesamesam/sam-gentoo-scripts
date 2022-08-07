@@ -6,57 +6,57 @@
 template_pkg=net-dns/dnsx
 
 get_last_version() {
-    local cpn=${1}
-    local ver=${2}
+	local cpn=${1}
+	local ver=${2}
 
-    # Copied from other script (gbump)
-    if [[ -z ${ver} ]] ; then
-        last_version_cpv=$(portageq best_visible "${EROOT:-/}" "${cpn}")
-    else
-        last_version_cpv=$(portageq best_visible "${EROOT:-/}" "<${cpn}-${ver}")
-    fi
+	# Copied from other script (gbump)
+	if [[ -z ${ver} ]] ; then
+		last_version_cpv=$(portageq best_visible "${EROOT:-/}" "${cpn}")
+	else
+		last_version_cpv=$(portageq best_visible "${EROOT:-/}" "<${cpn}-${ver}")
+	fi
 
-    last_version_pf=$(atomf "%f" ${last_version_cpv})
-    echo ${last_version_pf}
+	last_version_pf=$(atomf "%f" ${last_version_cpv})
+	echo ${last_version_pf}
 }
 
 atomset "${1}-${2}" || { eerror "atomset failed! Insufficient arguments? We need: ${0##*/} <CATEGORY/PN> <PV>" ; exit 1; }
 
 if [[ -z ${PV} ]] ; then
-    eerror "No version given!"
-    exit 1
+	eerror "No version given!"
+	exit 1
 fi
 
 if [[ ! -d profiles/ ]] ; then
-    eerror "Please run from repository root!"
-    exit 1
+	eerror "Please run from repository root!"
+	exit 1
 fi
 
 einfo "Bumping ${CATEGORY}/${PN} to ${PV}"
 
 # Is it a new package?
 if [[ ! -d ${CATEGORY}/${PN} ]] ; then
-    einfo "${CATEGORY}/${PN} does not yet exist, using ${template_pkg} as template"
+	einfo "${CATEGORY}/${PN} does not yet exist, using ${template_pkg} as template"
 
-    mkdir -p ${CATEGORY}/${PN} || exit 1
-    cd ${CATEGORY}/${PN} || exit 1
+	mkdir -p ${CATEGORY}/${PN} || exit 1
+	cd ${CATEGORY}/${PN} || exit 1
 
-    last_version_p=$(get_last_version ${template_pkg})
+	last_version_p=$(get_last_version ${template_pkg})
 
-    cp ../../${template_pkg}/${last_version_p}.ebuild ${P}.ebuild || exit 1
+	cp ../../${template_pkg}/${last_version_p}.ebuild ${P}.ebuild || exit 1
 
-    einfo "Created ${CATEGORY}/${PN}/${P}.ebuild from ${template_pkg}/${last_version_p}.ebuild. Please edit as needed."
+	einfo "Created ${CATEGORY}/${PN}/${P}.ebuild from ${template_pkg}/${last_version_p}.ebuild. Please edit as needed."
 elif [[ -f ${CATEGORY}/${PN}/${P}.ebuild ]] ; then
-    # Does this version already exist?
-    ewarn "${P}.ebuild already exists! Skipping creation."
+	# Does this version already exist?
+	ewarn "${P}.ebuild already exists! Skipping creation."
 else
-    mkdir -p ${CATEGORY}/${PN} || exit 1
-    cd ${CATEGORY}/${PN} || exit 1
+	mkdir -p ${CATEGORY}/${PN} || exit 1
+	cd ${CATEGORY}/${PN} || exit 1
 
-    # Already exists
-    last_version_p=$(get_last_version ${CATEGORY}/${PN} ${PV})
+	# Already exists
+	last_version_p=$(get_last_version ${CATEGORY}/${PN} ${PV})
 
-    cp ${last_version_p}.ebuild ${P}.ebuild || exit 1
+	cp ${last_version_p}.ebuild ${P}.ebuild || exit 1
 
-    einfo "Created ${CATEGORY}/${PN}/${P}.ebuild. Please edit as needed."
+	einfo "Created ${CATEGORY}/${PN}/${P}.ebuild. Please edit as needed."
 fi
