@@ -56,7 +56,7 @@ else
 	# Already exists
 	last_version_p=$(get_last_version ${CATEGORY}/${PN} ${PV})
 
-	cp ${last_version_p}.ebuild ${P}.ebuild || exit 1
+	cp $(atomf "%n%v" ${last_version_p}).ebuild ${P}.ebuild || exit 1
 
 	einfo "Created ${CATEGORY}/${PN}/${P}.ebuild. Please edit as needed."
 fi
