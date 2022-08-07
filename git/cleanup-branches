@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # cleanup-branches
 
 # Deletes branches matching a glob

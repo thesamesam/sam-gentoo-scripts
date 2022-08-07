@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Find packages which ostensibly have a maintainer but haven't
 # received any commits from them in the last year.
 # Uses:

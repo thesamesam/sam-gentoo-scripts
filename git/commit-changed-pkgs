@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # commit-changed-pkgs
 
 # Commits all changes with a given template

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Iterate over a list of repositories and push a dummy branch (then delete it)
 # to trigger gentoo infra's mirroring to github.
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Find non-live ebuilds lacking any KEYWORDS
 # Uses:
 # - Find things which have been "unkeyworded for testing" indefinitely

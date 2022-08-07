@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # check-all-changed-pkgs
 
 # Runs 'ebuild ... clean prepare' on a all packages touched locally.

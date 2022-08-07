@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Takes a pkgcheck warning and reports bugs for each package triggering that
 # warning to respective package maintainers on Bugzilla.
 # TODO: could factor some of it out a bit better to allow use for things

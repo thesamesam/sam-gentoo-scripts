@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # sort-branch
 # Sorts a given git branch's commits alphabetically
 # (useful for e.g. Gentoo commits which are prefixed with 'category/package:')

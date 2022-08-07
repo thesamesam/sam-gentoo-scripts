@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # rebase-filter-maint
 
 # A script to cherry-pick commits affecting only certain Gentoo

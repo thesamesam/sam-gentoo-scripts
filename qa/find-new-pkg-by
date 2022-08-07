@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Find new packages for a maintainer and list them
 # Useful for e.g. looking at whether some contributors add more new packages
 # than others, and possibly directing them to GURU or similar instead.
