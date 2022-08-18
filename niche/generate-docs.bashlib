@@ -20,8 +20,19 @@ generate-docs_setup_environment() {
 		local repo_path=${PWD}
 	fi
 
+	# For new setups (first-time running doc generation at all), not
+	# all the infrastructure may be in the ebuild yet. We only pass
+	# USE="doc man" ... when it's not present because otherwise
+	# it pulls in unnecessary deps. We can just rely on the deps
+	# from ${PN^^}_DOCS_PREBUILT=0 when it's an already setup package.
+	local docs_prebuilt_set="${PN^^}_DOCS_PREBUILT"
+	local use_prefix=""
+	if [[ -n "${!docs_prebuilt_set}" ]] ; then
+		use_prefix="USE='doc man'"
+	fi
+
 	ebuild ${repo_path}/${1} manifest || exit 1
-	sudo USE="doc man" PORTDIR_OVERLAY="${repo_path}" emerge --quiet --oneshot --onlydeps =${PF} || { eerror "Installing doc dependencies for =${PF} failed! Exiting!" ; exit 1 ; }
+	sudo "${use_prefix}" PORTDIR_OVERLAY="${repo_path}" emerge --quiet --oneshot --onlydeps =${PF} || { eerror "Installing doc dependencies for =${PF} failed! Exiting!" ; exit 1 ; }
 
 	# We need this to flush out a previous doc entry from a failed attempt
 	USE="doc man" ebuild ${repo_path}/${1} manifest
