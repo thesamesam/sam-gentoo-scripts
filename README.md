@@ -25,6 +25,9 @@ A collection of scripts for Gentoo development.
 
 ### Maintenance
 
+* `gbump`: bump group of packages (and commits if desired). Calls
+  `bump-generic` under the hood.
+
 * `bump-generic`: bumps package to new version, copying from last visible
    version in the repository. Used as a basis for other scripts too.
 
