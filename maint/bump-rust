@@ -12,7 +12,17 @@ fi
 
 ORIGINAL_PWD=$(pwd)
 
-${SCRIPT_DIR}/bump-generic "$@" || exit 1
+${SCRIPT_DIR}/bump-generic "$@" || {
+	case $? in
+		3)
+			ewarn "Continuing as re-generation of CRATES may be desired."
+			;;
+		*)
+			exit $?
+			;;
+	esac
+}
+
 cd ${1} || exit 1
 atomset "${1}-${2}"
 
