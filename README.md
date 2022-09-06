@@ -43,6 +43,8 @@ A collection of scripts for Gentoo development.
 
 * `generate-libunwind-docs`: generate man page tarball for `sys-libs/libunwind`
 
+* `generate-sshuttle-docs`: generate man page tarball for `net-proxy/sshuttle`
+
 * `generate-qemu-docs`: generate man page tarball for `app-emulation/qemu`
 
 * `generate-pkgdev-docs`: generate man page tarball for `dev-util/pkgdev`
