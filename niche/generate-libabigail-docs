@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+if [[ ${BASH_SOURCE} = */* ]]; then
+	SCRIPT_DIR=${BASH_SOURCE%/*}/
+else
+	SCRIPT_DIR=./
+fi
+
+. ${SCRIPT_DIR}/generate-docs.bashlib || { echo "Failed to source generate-docs.bashlib!" ; exit 1 ; }
+
+export LIBABIGAIL_DOCS_PREBUILT=0
+
+generate-docs_copy_docs() {
+	ebegin "Copying man pages to ${dir}/${P}-docs"
+	cp -ra "${WORKDIR}"/${P}_build/doc/manuals/man "${dir}"/${P}-docs/
+	eend $?
+
+	mkdir "${dir}"/${P}-docs/texinfo/ || exit 1
+	ebegin "Copying info pages to ${dir}/${P}-docs"
+	cp -ra "${WORKDIR}"/${P}_build/doc/manuals/texinfo/*.info "${dir}"/${P}-docs/texinfo
+	eend $? || exit 1
+}
+
+generate-docs $@
