@@ -104,7 +104,7 @@ ebegin "Creating tarball"
 	# Find the (sub)dir we used earlier, even if it was a subdir we guessed
 	cd $(find . -maxdepth 2 -type d -name '*go-mod*' -print -quit || exit 1)/.. || exit 1
 
-	tar ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz go-mod || exit 1
+	LC_ALL=C TZ=UTC tar ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz go-mod || exit 1
 
 	mv ${P}-deps.tar.xz $(portageq distdir)/ || exit 1
 ) || { eend $? ; exit 1; }
