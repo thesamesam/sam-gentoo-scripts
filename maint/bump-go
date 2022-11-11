@@ -121,14 +121,10 @@ ebegin "Creating tarball"
 		cd ${dir}/.. || exit 1
 	fi
 
-	case ${mode} in
-		vendor)
-			LC_ALL=C TZ=UTC tar ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz vendor || exit 1
-		;;
-		download)
-			LC_ALL=C TZ=UTC tar ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz go-mod || exit 1
-		;;
-	esac
+	local tar_target=go-mod
+	[[ ${mode} == vendor ]] && tar_target=vendor
+
+	LC_ALL=C TZ=UTC tar ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz ${tar_target} || exit 1
 
 	mv ${P}-deps.tar.xz $(portageq distdir)/ || exit 1
 ) || { eend $? ; exit 1; }
