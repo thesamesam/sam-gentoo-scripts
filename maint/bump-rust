@@ -63,22 +63,22 @@ export WORKDIR="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/work
 # Borrowed from mgorny-dev-tools' pkgdiff
 export S=$(sed -nr 's/^declare -x S="(.*)"/\1/p' "${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/temp/environment)
 
-cmd='CARGO_HOME="${PWD}"/cargo-tmp cargo fetch'
+cmd="CARGO_HOME=${S}/../distdir/cargo-tmp cargo fetch"
 ebegin "Running '${cmd}'"
 (
 	cd "${S}" || exit 1
 
 	if [[ ! -f Cargo.toml ]] ; then
 		ewarn "No Cargo.toml in $(pwd)!"
-		ewarn "Guessing first top-level subdir with Cargo.toml?"
-		dirs=$(find . -maxdepth 1 -type d -print)
+		ewarn "Guessing first top-three-level subdir with Cargo.toml?"
+		dirs=$(find . -maxdepth 3 -type d -print)
 
 		for dir in ${dirs[@]} ; do
 			if [[ -f ${dir}/Cargo.toml ]] ; then
 				einfo "Entering ${dir} which contains a Cargo.toml file"
 				cd ${dir} || exit 1
 			fi
-		done || { eerror "Could not find any Cargo.toml in top-level subdirs either!" ; exit 1; }
+		done || { eerror "Could not find any Cargo.toml in top-three-level subdirs either!" ; exit 1; }
 	fi
 
 	eval "${cmd}" || exit 1
@@ -89,7 +89,8 @@ ebegin "Creating CRATES variable"
 	cd "${S}" || exit 1
 
 	# TODO: nullglob?
-	crates=$(ls -1 cargo-tmp/registry/src/*)
+	crates=$(ls -1 "${S}"/../distdir/cargo-tmp/registry/src/*)
+	test $? -gt 0 && exit 1
 
 	echo ${crates} > "${WORKDIR}"/crates-list
 ) || { eend $? ; exit 1; }
