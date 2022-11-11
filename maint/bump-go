@@ -16,8 +16,7 @@ ORIGINAL_PWD=$(pwd)
 # so clobber them; sort inputfiles; set ownership to something Gentoo-neutral.
 REPRODUCIBLE_TAR_ARGS="--mtime="${SOURCE_DATE_EPOCH:-1970-01-01}" --sort=name --owner=portage --group=portage"
 # TODO: verify this doesn't interfere with reproducible tars?
-XZ_OPT=${XZ_OPT-"-T0 -9"}
-export XZ_OPT
+export XZ_OPT=${XZ_OPT-"-T0 -9"}
 
 ${SCRIPT_DIR}/bump-generic "$@" || {
 	case $? in
@@ -67,11 +66,13 @@ einfo "Unpacking ${P}"
 export PORTAGE_TMPDIR="$(mktemp -d)"
 export PORTAGE_USERNAME="$(whoami)"
 export PORTAGE_WORKDIR_MODE="775"
+
 ebuild ${ebuild} clean unpack || exit 1
 
 # We need to export these for use in the subshells :(
 export D="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/image
 export WORKDIR="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/work
+
 # Borrowed from mgorny-dev-tools' pkgdiff
 export S=$(sed -nr 's/^declare -x S="(.*)"/\1/p' "${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/temp/environment)
 

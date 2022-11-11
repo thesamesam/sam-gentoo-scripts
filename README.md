@@ -49,6 +49,8 @@ A collection of scripts for Gentoo development.
 
 * `generate-pkgdev-docs`: generate man page tarball for `dev-util/pkgdev`
 
+* `generate-libabigail-docs`: generate man page tarball for `dev-util/libabigail`
+
 ### git
 
 #### Assorted scripts
