@@ -22,14 +22,16 @@ get_last_version() {
 	local ver=${2}
 
 	# Copied from other script (gbump)
+	# Hack needed here because best_version doesn't respect --repo (maybe intentional?)
+	# and w/o best_version, multiple versions may be returned.
 	if [[ -z ${ver} ]] ; then
-		last_version_cpv=$(portageq best_visible "${EROOT:-/}" "${cpn}")
+		last_version_cpv=( $(portageq ${PORTAGE_USE_REPO+--repo ${PORTAGE_USE_REPO}} "${cpn}") )
 	else
-		last_version_cpv=$(portageq best_visible "${EROOT:-/}" "<${cpn}-${ver}")
+		last_version_cpv=( $(portageq ${PORTAGE_USE_REPO+--repo ${PORTAGE_USE_REPO}} "<${cpn}-${ver}") )
 	fi
 
-	last_version_pf=$(atomf "%f" ${last_version_cpv})
-	echo ${last_version_pf}
+	last_version_pf=$(atomf "%f" ${last_version_cpv[0]})
+	echo ${last_version_pf[0]}
 }
 
 atomset "${1}-${2}" || { eerror "atomset failed! Insufficient arguments? We need: ${0##*/} <CATEGORY/PN> <PV>" ; exit 1; }
