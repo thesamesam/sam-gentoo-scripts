@@ -121,7 +121,7 @@ ebegin "Creating tarball"
 		cd ${dir}/.. || exit 1
 	fi
 
-	local tar_target=go-mod
+	tar_target=go-mod
 	[[ ${mode} == vendor ]] && tar_target=vendor
 
 	LC_ALL=C TZ=UTC tar ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz ${tar_target} || exit 1
