@@ -69,7 +69,7 @@ export PORTAGE_TMPDIR="$(mktemp -d)"
 export PORTAGE_USERNAME="$(whoami)"
 export PORTAGE_WORKDIR_MODE="775"
 
-ebuild ${ebuild} clean unpack || exit 1
+NONFATAL_VERIFY=1 ebuild ${ebuild} clean unpack || exit 1
 
 # We need to export these for use in the subshells :(
 export D="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/image
