@@ -65,8 +65,7 @@ get_packages_by_maintainer() {
 	echo $(portageq --repo gentoo -n --maintainer-email ${1})
 }
 
-
-maintainer="foo@gentoo.org"
+maintainer="${1:-foo@gentoo.org}"
 
 candidate_packages=$(get_packages_by_maintainer ${maintainer})
 #candidate_packages=$(</tmp/list)
