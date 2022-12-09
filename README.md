@@ -51,6 +51,8 @@ A collection of scripts for Gentoo development.
 
 * `generate-libabigail-docs`: generate man page tarball for `dev-util/libabigail`
 
+* `generate-iputils-docs`: generate man page tarball for `net-misc/iputils`
+
 ### git
 
 #### Assorted scripts
