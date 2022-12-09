@@ -42,7 +42,8 @@ fi
 
 # ... but put in a dummy line for now.
 # We can't do a blank one (eclass will die), so let's do ${P} which usually works.
-sed -i -e '/^EAPI=.*/a\\nCRATES="${P}"' ${ebuild} || exit 1
+# (Can try ${P} if this fails for some reason)
+sed -i -e '/^EAPI=.*/a\\nCRATES=" "' ${ebuild} || exit 1
 
 # 2. Fetch!
 einfo "Fetching ${P}"
