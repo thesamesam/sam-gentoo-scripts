@@ -5,6 +5,15 @@
 . /lib/gentoo/functions.sh || { echo "Could not find gentoo-functions' functions.sh!" ; exit 1; }
 . "$(pkg-config iwdevtools --variable=atomf)" || { eerror "Could not find iwdevtools' atomf library! Emerge app-portage/iwdevtools?" ; exit 1; }
 
+# The following tar invocations use options specific to GNU tar. On some
+# systems (e.g. Gentoo), `tar` can be a different tool (e.g. bsdtar), and GNU
+# tar can be found as `gtar`.
+if [[ -x "$(command -v gtar)" ]] ; then
+       tar=gtar
+else
+       tar=tar
+fi
+
 if [[ ${BASH_SOURCE} == */* ]]; then
 	SCRIPT_DIR=${BASH_SOURCE%/*}/
 else
@@ -124,7 +133,7 @@ ebegin "Creating tarball"
 	tar_target=go-mod
 	[[ ${mode} == vendor ]] && tar_target=vendor
 
-	LC_ALL=C TZ=UTC tar ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz ${tar_target} || exit 1
+	LC_ALL=C TZ=UTC ${tar} ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz ${tar_target} || exit 1
 
 	mv ${P}-deps.tar.xz $(portageq distdir)/ || exit 1
 ) || { eend $? ; exit 1; }
