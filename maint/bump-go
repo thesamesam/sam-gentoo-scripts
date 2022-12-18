@@ -49,7 +49,7 @@ ebuild=${P}.ebuild
 #
 # 1. sed out the dep tarball line if there is one, so we can fetch.
 einfo "Sedding out 'deps' tarball line if exists"
-sed -i -e "/^SRC_URI.*deps/ s/^/#/" ${ebuild} || exit 1
+sed -i -E "/^(\t+)?SRC_URI.*deps/ s/^/#/" ${ebuild} || exit 1
 
 einfo "Sedding out 'EGO_SUM' lines if they exist"
 if grep -q "EGO_SUM" ${ebuild} ; then
@@ -63,7 +63,7 @@ if grep -q "EGO_SUM" ${ebuild} ; then
 	sed -i -e '/go-module_set_globals/d' ${ebuild} || die
 
 	# Add in our -deps line (commented)
-	sed -i -e "/^SRC_URI=/a#SRC_URI+=\" \${P}-deps.tar.xz\"" ${ebuild} || exit 1
+	sed -i -E "/^(\t+)?SRC_URI=/a#SRC_URI+=\" \${P}-deps.tar.xz\"" ${ebuild} || exit 1
 fi
 
 # 2. Fetch!
