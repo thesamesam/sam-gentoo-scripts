@@ -37,6 +37,8 @@ A collection of scripts for Gentoo development.
 * `bump-rust`: bumps Rust package to a new version (generates CRATES variable
    contents for you).
 
+* `git-revbump-all`: revbump all changed packages.
+
 #### Niche
 
 * `generate-cmake-docs`: generate man page tarball for `dev-util/cmake`

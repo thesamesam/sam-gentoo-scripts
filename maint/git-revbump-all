@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+. "$(pkg-config iwdevtools --variable=atomf)" || { eerror "Could not find iwdevtools' atomf library! Emerge app-portage/iwdevtools?" ; exit 1; }
+. /lib/gentoo/functions.sh || { echo "Failed to source functions.sh!" ; exit 1 ; }
+
+# Get a list of the files changed
+list=$(git diff --name-only | grep -v "/layout/" | grep -v "/metadata/")
+
+# Parse out the directories to make it easier to see metadata.xml
+dirs=()
+for file in ${list[@]} ; do
+	dirs+=($(dirname "${file}"))
+done
+
+# Mangle the format for iteration
+dirs=($(echo ${dirs[@]} | tr ' ' '\n' | sort -u))
+
+# Needs a metadata cache for the live check
+#pmaint regen .
+
+# Iterate over all of the files changed locally (unstaged)
+for dir in ${dirs[@]} ; do
+	if [[ ${dir} == *eclass* ]] || [[ ${dir} == *metadata* ]] ; then
+		continue
+	fi
+
+	dir=${dir/files/}
+
+	cd "${dir}"
+
+	einfo "Iterating over ${dir}"
+	eindent
+
+	vers=( $(ls -1 *.ebuild | sort) )
+
+	declare -A revision_map
+
+	for version in "${vers[@]}" ; do
+		atomset $(dirname ${dir})/${version%%.ebuild}
+		revision_map[${PV}]=0
+	done
+
+	# Versions where the content didn't change (think e.g. Emacs
+	# where have multiple slots and only changed >= 23, we don't want to
+	# revbump 18 needlessly).
+	no_change_versions=()
+
+	for x in "${vers[@]}" ; do
+		atomset $(dirname ${dir})/${x%%.ebuild}
+
+		if grep -q "PROPERTIES.*live" ../../metadata/md5-cache/${CATEGORY}/${PF} ; then
+			continue
+		fi
+
+		# If this version didn't change at all, skip it.
+		if git diff --exit-code ../../${dir}/${PF}.ebuild &> /dev/null ; then
+			no_change_versions+=( "${CATEGORY}/${PF}" )
+		fi
+
+		largest_revision=${revision_map[${PV}]}
+		if [[ ${PR/r} -gt ${largest_revision} ]] ; then
+			revision_map[${PV}]=${PR/r}
+		fi
+	done
+
+	# Another loop because sort doesn't always get our versioning right.
+	# TODO: could probably drop this as I think that's only an issue
+	# with PV.
+	for x in "${vers[@]}" ; do
+		atomset $(dirname ${dir})/${x%%.ebuild}
+
+		if (printf '%s\n' "${no_change_versions[@]}" | grep -xq "${CATEGORY}/${PF}") ; then
+			ewarn "Skipping ${CATEGORY}/${P} as nothing changed"
+			continue
+		fi
+
+		if grep -q "PROPERTIES.*live" ../../metadata/md5-cache/${CATEGORY}/${PF} ; then
+			continue
+		fi
+
+		largest_revision=${revision_map[${PV}]}
+		if [[ ${largest_revision} -eq -1 ]] ; then
+			# Already shown, skip.
+			continue
+		fi
+
+		einfo "${PV} has max revision ${largest_revision}"
+
+		# Don't show again.
+		revision_map[${PV}]=-1
+
+		revision=${largest_revision}
+
+		for xrevision in '' ${PR/r} $(seq ${PR/r} $((${largest_revision} - 1))) ; do
+			if [[ -n ${xrevision} && ${xrevision} != 0 ]] ; then
+				git mv ${P}-r${xrevision}.ebuild ${P}-r$((${revision} + 1)).ebuild
+			else
+				git mv ${P}.ebuild ${P}-r$((${revision} + 1)).ebuild
+			fi
+
+			revision=$((revision + 1))
+		done
+	done
+
+	eoutdent
+
+	cd ../..
+done
