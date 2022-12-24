@@ -31,7 +31,7 @@ get_last_version() {
 	fi
 
 	last_version_pf=$(atomf "%f" ${last_version_cpv[-1]})
-	echo ${last_version_pf[-1]}
+	echo ${last_version_cpv[-1]}
 }
 
 atomset "${1}-${2}" || { eerror "atomset failed! Insufficient arguments? We need: ${0##*/} <CATEGORY/PN> <PV>" ; exit 1; }
