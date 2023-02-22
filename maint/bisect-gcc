@@ -27,26 +27,27 @@ skip() {
 
 export ACCEPT_KEYWORDS="**"
 export FEATURES="ccache -collision-protect -protect-owned -userfetch -usersync -userpriv -usersandbox"
+
 #export EVCS_OFFLINE=1
 export EGIT_CLONE_TYPE=mirror
 export EGIT_OVERRIDE_REPO_GCC=file:///home/sam/git/gcc
-#export EGIT_OVERRIDE_COMMIT_GCC=e4b5fec75aa8d0d01f6e042ec2888ef92eaa932a
 export EGIT_OVERRIDE_COMMIT_GCC=$(git rev-parse HEAD)
-#export EGIT_OVERRIDE_BRANCH_GCC=master
+#export EGIT_OVERRIDE_COMMIT_GCC=e4b5fec75aa8d0d01f6e042ec2888ef92eaa932a
 
+repo_path="$(portageq get_repo_path ${EROOT:-/} gentoo)"
 gcc_ver=$(<gcc/BASE-VER)
 gcc_ver=${gcc_ver%%.*}
 
 fatal cd ~/git/gcc
 # --enable-checking=all
-EXTRA_ECONF="--disable-bootstrap" USE="vanilla -rust -openmp -fortran -pgo -lto -jit" skip ebuild /var/db/repos/gentoo/sys-devel/gcc/gcc-${gcc_ver}.*.9999.ebuild digest clean merge
+EXTRA_ECONF="--disable-bootstrap" USE="vanilla -rust -openmp -fortran -pgo -lto -jit" skip ebuild ${repo_path}/sys-devel/gcc/gcc-${gcc_ver}.*.9999.ebuild digest clean merge
 
 # Try hard to make sure we're actually using the newly-built thing
-fatal gcc-config x86_64-pc-linux-gnu-${gcc_ver}
-fatal source /etc/profile
-fatal export CC=gcc-${gcc_ver}
-fatal export CXX=g++-${gcc_ver}
+skip gcc-config x86_64-pc-linux-gnu-${gcc_ver}
+skip source /etc/profile
+skip export CC=gcc-${gcc_ver}
+skip export CXX=g++-${gcc_ver}
 
-sudo ebuild /var/db/repos/gentoo/media-libs/harfbuzz/harfbuzz-6.0.0.ebuild clean compile || exit 1
+fatal sudo ebuild ${repo_path}/media-libs/harfbuzz/harfbuzz-6.0.0.ebuild clean compile
 
 exit 0
