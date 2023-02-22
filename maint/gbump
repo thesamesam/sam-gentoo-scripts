@@ -123,6 +123,15 @@ case ${suite} in
 		bump_packages dev-cpp/folly dev-cpp/edencommon dev-util/watchman
 		;;
 
+	bitcoin)
+		bump_packages \
+			dev-util/bitcoin-tx \
+			net-libs/libbitcoinconsensus \
+			net-p2p/bitcoin-cli \
+			net-p2p/bitcoin-qt \
+			net-p2p/bitcoind
+		;;
+
 	*)
 		eerror "Unrecognised suite ${suite}! Maybe you want bump-generic? Exiting."
 		exit 127
