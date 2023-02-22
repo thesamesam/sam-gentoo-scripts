@@ -6,13 +6,9 @@
 
 # Configuration:
 #	- maintainers: maintainers to skip
-#	- template: file containing "*: msg" or "cat/pkg: msg" respectively for pkgdev/repoman
-#	- tool: pkgdev or repoman
 #	- debug: noisy or not
 #maintainers="(some-project-to-treat-specially)"
 maintainers=""
-template="~/scripts/template-repoman"
-tool="repoman"
 debug=1
 
 #

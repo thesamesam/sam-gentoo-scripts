@@ -10,13 +10,11 @@
 
 # Configuration:
 # - maintainers: maintainers to skip
-# - template: file containing "*: msg" or "cat/pkg: msg" respectively for pkgdev/repoman
-# - tool: pkgdev or repoman
+# - template: file containing "*: msg" for pkgdev
 # - debug: noisy or not
 #maintainers="(some-project-to-treat-specially)"
 maintainers=""
-template="/home/sam/scripts/template-repoman"
-tool="repoman"
+template="/home/sam/scripts/template-pkgdev"
 debug=1
 
 #
@@ -54,7 +52,7 @@ for dir in ${dirs[@]} ; do
 	cd "${dir}"
 
 	git add .
-	${tool} commit -M ${template} -f
+	pkgdev commit -M ${template}
 
 	cd ../..
 done
