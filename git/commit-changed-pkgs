@@ -14,7 +14,7 @@
 # - debug: noisy or not
 #maintainers="(some-project-to-treat-specially)"
 maintainers=""
-template="/home/sam/scripts/template-pkgdev"
+template="${BASH_SOURCE%/*}/template-pkgdev"
 debug=1
 
 #
