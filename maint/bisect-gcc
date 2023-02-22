@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# https://wiki.gentoo.org/wiki/Bisecting_with_live_ebuilds
+# GPL-3+
+. /lib/gentoo/functions.sh || { echo "Failed to source functions.sh!" ; exit 1 ; }
+
+esyslog() {
+	: No need.
+}
+
+die() {
+	eerror "$@"
+	exit 255 # Abort the bisect process
+}
+
+fatal() {
+	einfo Running "$@"
+	"$@" || die "$@"
+}
+
+skip() {
+	einfo Running "$@"
+	if ! "$@"; then
+		ewarn Build failed, skipping: "$@"
+		exit 125
+	fi
+}
+
+export ACCEPT_KEYWORDS="**"
+export FEATURES="ccache -collision-protect -protect-owned -userfetch -usersync -userpriv -usersandbox"
+#export EVCS_OFFLINE=1
+export EGIT_CLONE_TYPE=mirror
+export EGIT_OVERRIDE_REPO_GCC=file:///home/sam/git/gcc
+#export EGIT_OVERRIDE_COMMIT_GCC=e4b5fec75aa8d0d01f6e042ec2888ef92eaa932a
+export EGIT_OVERRIDE_COMMIT_GCC=$(git rev-parse HEAD)
+#export EGIT_OVERRIDE_BRANCH_GCC=master
+
+gcc_ver=$(<gcc/BASE-VER)
+gcc_ver=${gcc_ver%%.*}
+
+fatal cd ~/git/gcc
+# --enable-checking=all
+EXTRA_ECONF="--disable-bootstrap" USE="vanilla -rust -openmp -fortran -pgo -lto -jit" skip ebuild /var/db/repos/gentoo/sys-devel/gcc/gcc-${gcc_ver}.*.9999.ebuild digest clean merge
+
+# Try hard to make sure we're actually using the newly-built thing
+fatal gcc-config x86_64-pc-linux-gnu-${gcc_ver}
+fatal source /etc/profile
+fatal export CC=gcc-${gcc_ver}
+fatal export CXX=g++-${gcc_ver}
+
+sudo ebuild /var/db/repos/gentoo/media-libs/harfbuzz/harfbuzz-6.0.0.ebuild clean compile || exit 1
+
+exit 0
