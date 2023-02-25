@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+source /usr/lib/gentoo/functions.sh
+
 # Takes a pkgcheck warning and reports bugs for each package triggering that
 # warning to respective package maintainers on Bugzilla.
 # TODO: could factor some of it out a bit better to allow use for things
@@ -10,36 +12,27 @@ connection="gentoo"
 #connection="gentoo-test"
 
 # Used as 'pkgcheck scan -k ...'
-#pkgcheck_warning="BinaryFile"
-#pkgcheck_warning="DeprecatedEclass"
 pkgcheck_warning="PythonCompatUpdate"
-#pkgcheck_warning="DeprecatedEclassVariable"
 # This gets prefixed with 'package: '
-#bug_summary="uses binary files in repository (${pkgcheck_warning})"
-#bug_summary="uses deprecated Go eclass (${pkgcheck_warning})"
-bug_summary="needs upgrade to Python 3.10 (${pkgcheck_warning})"
-bug_description="This package does not support Python 3.10. Please test it with Python 3.10 as a matter of urgency as the default will change in early June, as per message on gentoo-dev: https://archives.gentoo.org/gentoo-dev/message/13aa993921f19b6b095297721ffb0d0b. Ask in #gentoo-python on IRC if need any help."
-#bug_description="This package uses a deprecated Go eclass. It must be migrated to go-module.eclass. Fixing this does not require a revbump as it'll already be successfully installed."
-#bug_description="This package uses the deprecated EGO_SUM go-module.eclass variable. It must be migrated to dep tarballs (see eclassdocs) or vendored deps if upstream provide them."
-#bug_description="This package has binary files in files/. These must uploaded to e.g. dev.gentoo.org and downloaded in the ebuild to save space."
+bug_summary="needs upgrade to Python 3.11 (${pkgcheck_warning})"
+bug_description="This package does not support Python 3.11. Please test it with Python 3.11 as a matter of urgency as the default will change in early June, as per message on gentoo-dev: https://archives.gentoo.org/gentoo-dev/message/13aa993921f19b6b095297721ffb0d0b. Ask in #gentoo-python on IRC if need any help."
 # All filed bugs will block this tracker
 bug_tracker=823185
-#bug_tracker=1
 
 bad_files=$(pkgcheck scan -k ${pkgcheck_warning} -R FormatReporter --format "{category}/{package}")
-#bad_files=$(sort /tmp/bad_pkgs2)
+#bad_files=$(sort /tmp/bad_pkgs)
 
 get_maintainers() {
 	local pkg=${1}
 	local maintainers
 
-	maintainer_metadata=$(xmllint --xpath "//pkgmetadata/maintainer/email/text()" ${1}/metadata.xml)
+	maintainer_metadata=$(xmllint --xpath "//pkgmetadata/maintainer/email/text()" ${1}/metadata.xml 2>/dev/null)
 
-	if [[ -z ${maintainer_metadata} ]] || grep -q "XPath set is empty" ${maintainer_metadata}; then
+	if [[ -z ${maintainer_metadata} ]]; then
 		maintainer_metadata="maintainer-needed@gentoo.org"
 	fi
 
-	maintainer_metadata=$(echo ${maintainer_metadata} | uniq)
+	maintainer_metadata=$(echo "${maintainer_metadata}" | uniq)
 
 	echo "${maintainer_metadata[@]}"
 }
@@ -58,9 +51,6 @@ report_bug() {
 		[[ -n ${@} ]] && einfo "CC: ${@}"
 	)
 
-	#assignee="test@example.com"
-	#set -x
-
 	bugz_output=$(bugz \
 		--connection ${connection} \
 		post \
@@ -69,7 +59,7 @@ report_bug() {
 		--component "Current packages" \
 		--version unspecified \
 		--op-sys All \
-		--cc="$(IFS=,; echo ${@})" \
+		--cc="${cc// /,}" \
 		--platform All \
 		-a "${assignee}" \
 		-t "${package}: ${bug_summary}" \
@@ -98,8 +88,6 @@ report_bug() {
 }
 
 seen_packages=()
-
-source /usr/lib/gentoo/functions.sh
 
 for bad_package in ${bad_files[@]} ; do
 	einfo "Found bad package: ${bad_package}"
