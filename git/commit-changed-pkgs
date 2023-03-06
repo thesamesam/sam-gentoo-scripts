@@ -1,21 +1,26 @@
 #!/usr/bin/env bash
 # commit-changed-pkgs
 
-# Commits all changes with a given template
+# Commits all changes with a given message
 # Can exclude by maintainer.
 # Useful for e.g. big batch changes like a sed across tree
 
 # Usage:
-# bash ~/scripts/commit-changed-pkgs
+# bash ~/scripts/commit-changed-pkgs "message"
 
 # Configuration:
 # - maintainers: maintainers to skip
-# - template: file containing "*: msg" for pkgdev
 # - debug: noisy or not
 #maintainers="(some-project-to-treat-specially)"
 maintainers=""
-template="${BASH_SOURCE%/*}/template-pkgdev"
 debug=1
+
+if [[ -n "$1" ]]; then
+	message="$1"
+else
+	echo "Usage: bash ${0} <MESSAGE>"
+	exit 1
+fi
 
 #
 
@@ -52,7 +57,7 @@ for dir in ${dirs[@]} ; do
 	cd "${dir}"
 
 	git add .
-	pkgdev commit -M ${template}
+	pkgdev commit -M <(echo "*: ${message}")
 
 	cd ../..
 done
