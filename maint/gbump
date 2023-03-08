@@ -131,7 +131,17 @@ case ${suite} in
 			net-p2p/bitcoin-qt \
 			net-p2p/bitcoind
 		;;
-
+	opam)
+		bump_packages \
+			dev-ml/opam \
+			dev-ml/opam-core \
+			dev-ml/opam-state \
+			dev-ml/opam-client \
+			dev-ml/opam-format \
+			dev-ml/opam-solver \
+			dev-ml/opam-installer \
+			dev-ml/opam-repository
+		;;
 	*)
 		eerror "Unrecognised suite ${suite}! Maybe you want bump-generic? Exiting."
 		exit 127
