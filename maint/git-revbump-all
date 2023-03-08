@@ -1,4 +1,19 @@
 #!/usr/bin/env bash
+# TODO:
+# bad commits:
+# - 6c534857fe7787602eb85baa83a83b6343d9caf3 (xemacs)
+# - 24442eaf8850933702eab3e0a89fb781eb2eaacd (ghostscript)
+# - 1eafea2300c111f93f6482478095b3b372a67090 (enblend)
+# - d45c34870c2f5ab93373be68b536e29f6af74f9a (exact-image)
+# - 13c240a2cefccf659cad7f91cfee4bf245b7b90f (rawtherapee)
+# - 70e19cb29c796c97f89a870ee991374857014d82 (sane-backends)
+# - 1d69eb48210f31783270a1916835d8cde96fafb2 (xastir)
+# - 7a5839b17ff31d80f1023cddae7a24f81f27d7d8 (hylafaxplus)
+# - 7b8b1ce137eb602bafe40515dbbe63a01e7d1256 (grass)
+# - 426db63fb6f16b7702fb6620c73d0ac2c0191e81 (dcmtk)
+# - 4050bbe6b94322feaebcbb3c2b7126fc6520b43f (links)
+# - 9d8d66eb5921be4194a4c2a5697680fe6071ab56 (lcms)
+
 . "$(pkg-config iwdevtools --variable=atomf)" || { eerror "Could not find iwdevtools' atomf library! Emerge app-portage/iwdevtools?" ; exit 1; }
 . /lib/gentoo/functions.sh || { echo "Failed to source functions.sh!" ; exit 1 ; }
 
