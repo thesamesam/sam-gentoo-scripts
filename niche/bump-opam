@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# TODO: add to gbump instead
+NEW_VERSION=2.0.9
+REPO=~/git/gentoo
+COMMIT=1
+
+pkgs=(
+	dev-ml/opam
+	dev-ml/opam-core
+	dev-ml/opam-state
+	dev-ml/opam-client
+	dev-ml/opam-format
+	dev-ml/opam-solver
+	dev-ml/opam-installer
+	dev-ml/opam-repository
+)
+# opam-file-format is separate
+
+for pkg in ${pkgs[@]} ; do
+	stripped_pkg=${pkg/dev-ml\/}
+
+	# Grab the latest version
+	existing_version=$(ACCEPT_KEYWORDS="~amd64" portageq best_visible ${REPO} ${pkg})
+	# Strip it down to just version (${CATEGORY}/${PF} -> ${PVR})
+	existing_version=${existing_version/${pkg}/}
+
+	cd ${REPO}/${pkg}
+	echo "${pkg}: bumping"
+
+	cp ${stripped_pkg}*${existing_version}*.ebuild ${stripped_pkg}-${NEW_VERSION}.ebuild
+	ekeyword --quiet \~all ${stripped_pkg}-${NEW_VERSION}.ebuild
+	pkgdev manifest
+
+	if [[ ${COMMIT} -eq 1 ]] ; then
+		git add .
+		pkgdev commit
+	fi
+
+	echo -e "${pkg}: done\r\n"
+
+	cd ${REPO}
+done
+
+pkgcheck scan --commits
+
+echo "ACCEPT_KEYWORDS='~amd64' emerge -av1 ${pkgs[@]}"
