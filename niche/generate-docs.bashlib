@@ -32,11 +32,11 @@ generate-docs_setup_environment() {
 	fi
 
 	ebuild ${repo_path}/${1} manifest || exit 1
-	sudo "${use_prefix}" PORTDIR_OVERLAY="${repo_path}" emerge --quiet --oneshot --onlydeps =${PF} || { eerror "Installing doc dependencies for =${PF} failed! Exiting!" ; exit 1 ; }
+	sudo "${use_prefix}" FEATURES="-test" PORTDIR_OVERLAY="${repo_path}" emerge --quiet --oneshot --onlydeps =${PF} || { eerror "Installing doc dependencies for =${PF} failed! Exiting!" ; exit 1 ; }
 
 	# We need this to flush out a previous doc entry from a failed attempt
-	USE="doc man" ebuild ${repo_path}/${1} manifest
-	USE="doc man" ebuild ${repo_path}/${1} clean compile install || { eerror "Failed to build ${1} with USE='doc man'. Exiting!" ; exit 1 ; }
+	FEATURES="-test" USE="doc man" ebuild ${repo_path}/${1} manifest
+	FEATURES="-test" USE="doc man" ebuild ${repo_path}/${1} clean compile install || { eerror "Failed to build ${1} with USE='doc man'. Exiting!" ; exit 1 ; }
 
 	D="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/image
 	WORKDIR="${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/work
