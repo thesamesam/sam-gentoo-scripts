@@ -35,7 +35,7 @@ dirs=($(echo ${dirs[@]} | tr ' ' '\n' | sort -u))
 # If any ebuilds are in a directory mentioning a maintainer
 # we want to skip, we don't stage the changes.
 for dir in ${dirs[@]} ; do
-	if [[ ${dir} == *eclass* ]] || [[ ${dir} == *metadata* ]] ; then
+	if [[ ${dir} == *eclass* ]] || [[ ${dir} == *metadata* ]] || [[ ${dir} == *profiles* ]] ; then
 		continue
 	fi
 
