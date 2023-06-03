@@ -138,9 +138,9 @@ ebegin "Running '${cmd}'"
 
 		if [[ -f ${dir}/go.mod ]] ; then
 			einfo "Entering ${dir} which contains a go.mod file (recursive mode)"
-			pushd ${dir} || exit 1
+			pushd ${dir} &>/dev/null || exit 1
 			eval "${cmd}" || exit 1
-			popd || exit 1
+			popd &>/dev/null || exit 1
 		fi
 	done || { eerror "Something went wrong in recursive download mode?" ; exit 1; }
 ) || { eend $? ; exit 1; }
