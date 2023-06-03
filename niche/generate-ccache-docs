@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+if [[ ${BASH_SOURCE} = */* ]]; then
+	SCRIPT_DIR=${BASH_SOURCE%/*}/
+else
+	SCRIPT_DIR=./
+fi
+
+. ${SCRIPT_DIR}/generate-docs.bashlib || { echo "Failed to source generate-docs.bashlib!" ; exit 1 ; }
+
+export CCACHE_DOCS_PREBUILT=0
+
+generate-docs_copy_docs() {
+	ebegin "Copying docs to ${dir}/${P}-docs"
+	cp -ra "${WORKDIR}"/${P}_build/doc "${dir}"/${P}-docs/
+	eend $? || exit 1
+}
+
+generate-docs $@

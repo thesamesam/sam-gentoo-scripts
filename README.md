@@ -56,6 +56,8 @@ A collection of scripts for Gentoo development.
 
 * `generate-iputils-docs`: generate man page tarball for `net-misc/iputils`
 
+* `generate-ccache-docs`: generate man page tarball for `dev-util/ccache`
+
 ### git
 
 #### Assorted scripts
