@@ -92,7 +92,9 @@ case ${mode} in
 		cmd='go mod vendor'
 		;;
 	download)
-		cmd='GOMODCACHE="${PWD}"/go-mod go mod download -modcacherw'
+		# We previously used PWD here, but we now use WORKDIR so we can
+		# greedily accumulate the cache when recursing into subdirs.
+		cmd='GOMODCACHE="${WORKDIR}"/go-mod go mod download -modcacherw'
 		;;
 esac
 
@@ -108,6 +110,10 @@ ebegin "Running '${cmd}'"
 		dirs=$(find . -maxdepth 1 -type d -print)
 
 		for dir in ${dirs[@]} ; do
+			if [[ ${file} == *go-mod* ]] ; then
+				continue
+			fi
+
 			if [[ -f ${dir}/go.mod ]] ; then
 				einfo "Entering ${dir} which contains a go.mod file"
 				cd ${dir} || exit 1
@@ -116,6 +122,27 @@ ebegin "Running '${cmd}'"
 	fi
 
 	eval "${cmd}" || exit 1
+
+	# Try to recursively grab go.mods greedily if we're in 'download' mode
+	# (i.e. "dep tarball"). dev-db/etcd needed this.
+	cd "${S}" || exit 1
+
+	# TODO: just merge this into one loop? or advanced mode?
+	dirs=$(find . -iname 'go.mod' -type f -print)
+	# If there's multiple dirs with go.mod/go.sum, run in all of them.
+	for file in ${dirs[@]} ; do
+		dir=${file%/*}
+		if [[ ${file} == *go-mod* ]] ; then
+			continue
+		fi
+
+		if [[ -f ${dir}/go.mod ]] ; then
+			einfo "Entering ${dir} which contains a go.mod file (recursive mode)"
+			pushd ${dir} || exit 1
+			eval "${cmd}" || exit 1
+			popd || exit 1
+		fi
+	done || { eerror "Something went wrong in recursive download mode?" ; exit 1; }
 ) || { eend $? ; exit 1; }
 
 ebegin "Creating tarball"
@@ -131,7 +158,15 @@ ebegin "Creating tarball"
 	fi
 
 	tar_target=go-mod
-	[[ ${mode} == vendor ]] && tar_target=vendor
+	if [[ ${mode} == vendor ]] ; then
+		tar_target=vendor
+	else
+		# For 'download' (dep tarballs), we support pulling in all the
+		# go.mods recursively. Not yet hit a case where that's useful for
+		# vendor tarballs so not tried that.
+		# This lets us then just tar up the top-level go-mod/ dir.
+		cd "${WORKDIR}" || exit 1
+	fi
 
 	LC_ALL=C TZ=UTC ${tar} ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz ${tar_target} || exit 1
 
