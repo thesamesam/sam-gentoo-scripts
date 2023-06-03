@@ -12,6 +12,8 @@ fi
 
 ORIGINAL_PWD=$(pwd)
 
+ewarn "DEPRECATION NOTICE: Please use app-portage/pycargoebuild instead if it works for your case!"
+
 ${SCRIPT_DIR}/bump-generic "$@" || {
 	case $? in
 		3)
