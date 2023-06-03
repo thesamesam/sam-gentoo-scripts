@@ -35,7 +35,7 @@ A collection of scripts for Gentoo development.
    for you).
 
 * `bump-rust`: bumps Rust package to a new version (generates CRATES variable
-   contents for you).
+   contents for you) (NOTE: deprecated in favour of app-portage/pycargoebuild).
 
 * `git-revbump-all`: revbump all changed packages (NOTE: this needs some fixes
    first, see comment at top of script)
