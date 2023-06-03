@@ -37,7 +37,8 @@ A collection of scripts for Gentoo development.
 * `bump-rust`: bumps Rust package to a new version (generates CRATES variable
    contents for you).
 
-* `git-revbump-all`: revbump all changed packages.
+* `git-revbump-all`: revbump all changed packages (NOTE: this needs some fixes
+   first, see comment at top of script)
 
 #### Niche
 
