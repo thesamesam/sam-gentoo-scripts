@@ -116,7 +116,9 @@ echo
 case ${suite} in
 	gstreamer)
 		# We can identify these via inherits.
-		bump_packages $(get_reverse_dependencies_by_eclass gstreamer-meson)
+		bump_packages $(get_reverse_dependencies_by_eclass gstreamer-meson) \
+				dev-python/gst-python \
+				media-libs/gstreamer-editing-services
 		;;
 
 	watchman)
