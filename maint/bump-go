@@ -143,7 +143,8 @@ ebegin "Running '${cmd}'"
 			popd &>/dev/null || exit 1
 		fi
 	done || { eerror "Something went wrong in recursive download mode?" ; exit 1; }
-) || { eend $? ; exit 1; }
+)
+eend $? || exit 1
 
 ebegin "Creating tarball"
 (
@@ -171,7 +172,8 @@ ebegin "Creating tarball"
 	LC_ALL=C TZ=UTC ${tar} ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz ${tar_target} || exit 1
 
 	mv ${P}-deps.tar.xz $(portageq distdir)/ || exit 1
-) || { eend $? ; exit 1; }
+)
+eend $? || exit 1
 
 # 4. Undo the sed we did earlier to the ebuild
 cd ${ORIGINAL_PWD}/${CATEGORY}/${PN} || exit 1
