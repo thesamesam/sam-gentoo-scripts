@@ -85,7 +85,8 @@ ebegin "Running '${cmd}'"
 	fi
 
 	eval "${cmd}" || exit 1
-) || { eend $? ; exit 1; }
+)
+eend $? || exit 1
 
 ebegin "Creating CRATES variable"
 (
@@ -96,7 +97,8 @@ ebegin "Creating CRATES variable"
 	test $? -gt 0 && exit 1
 
 	echo ${crates} > "${WORKDIR}"/crates-list
-) || { eend $? ; exit 1; }
+)
+eend $? || exit 1
 
 # Add CRATES back
 cd ${ORIGINAL_PWD}/${CATEGORY}/${PN} || exit 1
