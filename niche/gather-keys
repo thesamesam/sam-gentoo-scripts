@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Usage: create keys.txt with newline-separated fingerprints
+set -u
+
+KEYSERVERS=(
+	hkps://keyserver.ubuntu.com
+	hkps://pgp.mit.edu
+	hkps://keys.gentoo.org
+	hkps://keys.openpgp.org
+	keyserver.pgp.com
+)
+
+tmp=$(mktemp -d)
+
+while read fingerprint keyholder_name; do
+	for keyserver in "${KEYSERVERS[@]}" ; do
+		gpg --no-default-keyring --keyring "${tmp}"/keyring.asc --batch --keyserver ${keyserver} --recv-keys ${fingerprint}
+	done
+done < ./keys.txt
+
+gpg --no-default-keyring --keyring "${tmp}"/keyring.asc --export --armor > "${tmp}"/keys.asc
+echo "${tmp}"/keys.asc
