@@ -161,6 +161,11 @@ ebegin "Creating tarball"
 	tar_target=go-mod
 	if [[ ${mode} == vendor ]] ; then
 		tar_target=vendor
+
+		# Recursive mode confused us.
+		if [[ ! -d ${tar_target} && -d ${S}/${tar_target} ]] ; then
+			cd "${S}" || exit 1
+		fi
 	else
 		# For 'download' (dep tarballs), we support pulling in all the
 		# go.mods recursively. Not yet hit a case where that's useful for
