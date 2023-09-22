@@ -1,0 +1,65 @@
+#!/bin/bash
+# Place into /etc/portage/repo.postsync.d/repo-patches and mark executable.
+# Applies patches in /etc/portage/repo-patches/${repo_name}/*.patch after
+# syncing the respective repo.
+. /lib/gentoo/functions.sh
+
+repository_name=${1}
+#sync_uri=${2}
+repository_path=${3}
+patched_any=0
+ret=0
+
+shopt -s nullglob
+patches=/etc/portage/repo-patches/${repository_name}/*.patch
+if [[ -z "${patches[@]}" ]] ; then
+	exit
+fi
+
+(
+	cd "${repository_path}" || exit 1
+
+	# TODO: Check if the repository is volatile?
+	if git rev-parse --git-dir > /dev/null 2>&1; then
+		git clean -fdx
+		git reset --hard HEAD
+	fi
+)
+
+for patch in ${patches[@]} ; do
+	patched_any=1
+	(
+		ebegin "Applying ${patch}"
+		cd "${repository_path}" || exit 1
+
+		#if patch -p1 -sN -f -g0 --no-backup-if-mismatch --dry-run < "${patch}" ; then
+		#       patch -p1 -sN -f -g0 --no-backup-if-mismatch < "${patch}"
+		#else
+		#       ewarn "Skipping ${patch} because dry run failed (already applied?)"
+		#fi
+
+		if git apply --check "${patch}" ; then
+			git apply "${patch}"
+		else
+			ret=$?
+			ewarn "Skipping ${patch} because dry run failed (already applied?)"
+		fi
+
+		eend ${ret}
+	)
+done
+
+if [[ ${patched_any} -eq 1 ]] ; then
+        ebegin "Regenerating cache"
+
+	# sys-apps/pkgcore
+	#pmaint regen "${repository_name}"
+
+	# sys-apps/pkgcraft-tools
+	pk repo metadata "${repository_name}"
+
+	# sys-apps/portage
+	#egencache --update --repo gentoo
+
+	eend $?
+fi
