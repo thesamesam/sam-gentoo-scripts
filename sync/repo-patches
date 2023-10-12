@@ -21,8 +21,8 @@ fi
 
 	# TODO: Check if the repository is volatile?
 	if git rev-parse --git-dir > /dev/null 2>&1; then
-		git clean -fdx
-		git reset --hard HEAD
+		git clean -qfdx
+		git reset --quiet --hard HEAD
 	fi
 )
 
@@ -38,8 +38,8 @@ for patch in ${patches[@]} ; do
 		#       ewarn "Skipping ${patch} because dry run failed (already applied?)"
 		#fi
 
-		if git apply --check "${patch}" ; then
-			git apply "${patch}"
+		if git apply --quiet --check "${patch}" ; then
+			git apply --quiet "${patch}"
 		else
 			ret=$?
 			ewarn "Skipping ${patch} because dry run failed (already applied?)"
@@ -53,13 +53,14 @@ if [[ ${patched_any} -eq 1 ]] ; then
         ebegin "Regenerating cache"
 
 	# sys-apps/pkgcore
-	#pmaint regen "${repository_name}"
+	#pmaint regen -q "${repository_name}"
 
 	# sys-apps/pkgcraft-tools
-	pk repo metadata "${repository_name}"
+	pk repo -q metadata "${repository_name}"
 
 	# sys-apps/portage
 	#egencache --update --repo gentoo
 
-	eend $?
+	ret=$?
+	eend ${ret} || exit ${ret}
 fi
