@@ -135,3 +135,8 @@ If you choose, `rebase-filter-maint` will create an inverse branch called
 `straightforward-${identifier}-whitelist` containing all commits affecting
 maintainers whose packages we can touch. This is a branch you might be
 able to just push.
+
+### gcc
+
+* `generate_snapshot_index.py`: Generates a text file `known_snapshots.txt` which
+   indexes snapshots and the commit they were based on.
