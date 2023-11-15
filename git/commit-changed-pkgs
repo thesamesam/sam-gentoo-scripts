@@ -52,7 +52,12 @@ for dir in ${dirs[@]} ; do
 	cd "${dir}"
 
 	git add .
-	pkgdev commit -M ${template}
+
+	if [[ -s ${template} ]] ; then
+		pkgdev commit -M ${template}
+	else
+		pkgdev commit
+	fi
 
 	cd ../..
 done
