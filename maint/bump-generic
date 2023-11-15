@@ -76,6 +76,15 @@ else
 	# Already exists
 	last_version_p=$(get_last_version ${CATEGORY}/${PN} ${PV})
 
+	if [[ -z ${last_version_p} ]] ; then
+		# The package exists but no version matching the constraint
+		# (e.g. <x-1.21.x) because it's new in a series and we're bumping
+		# the old one (in this case, gstreamer introduced adaptivedemux in
+		# 1.21.x and we're bumping 1.20.x).
+		einfo "Skipping ${CATEGORY}/${PN}/${P}.ebuild because no ebuilds matched for origin/template."
+		exit 0
+	fi
+
 	cp $(atomf "%n%v%r" ${last_version_p}).ebuild ${P}.ebuild || exit 1
 	ekeyword ~all ${P}.ebuild || exit 1
 
