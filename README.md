@@ -140,3 +140,5 @@ able to just push.
 
 * `generate_snapshot_index.py`: Generates a text file `known_snapshots.txt` which
    indexes snapshots and the commit they were based on.
+
+* `bisect-gcc`: Unpolished script used for `git bisect run` when bisecting GCC.
