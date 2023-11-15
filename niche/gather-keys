@@ -2,6 +2,9 @@
 # Usage: create keys.txt with newline-separated fingerprints
 set -u
 
+prefix="proj-keys-$(date -u +%Y%m%d)"
+separate_key_files=0
+
 KEYSERVERS=(
 	hkps://keyserver.ubuntu.com
 	hkps://pgp.mit.edu
@@ -16,7 +19,15 @@ while read fingerprint keyholder_name; do
 	for keyserver in "${KEYSERVERS[@]}" ; do
 		gpg --no-default-keyring --keyring "${tmp}"/keyring.asc --batch --keyserver ${keyserver} --recv-keys ${fingerprint}
 	done
+
+	if [[ ${separate_key_files} -eq 1 ]] ; then
+		gpg --no-default-keyring --keyring "${tmp}"/keyring.asc --export "${fingerprint}" > "${tmp}"/${prefix}-${fingerprint}.asc
+		echo "${tmp}"/${prefix}-${fingerprint}.asc
+	fi
+
 done < ./keys.txt
 
-gpg --no-default-keyring --keyring "${tmp}"/keyring.asc --export --armor > "${tmp}"/keys.asc
-echo "${tmp}"/keys.asc
+if [[ ${separate_key_files} -eq 0 ]] ; then
+	gpg --no-default-keyring --keyring "${tmp}"/keyring.asc --export --armor > "${tmp}"/keys.asc
+	echo "${tmp}"/keys.asc
+fi
