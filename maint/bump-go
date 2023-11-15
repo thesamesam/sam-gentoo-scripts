@@ -190,3 +190,7 @@ ebuild ${ebuild} clean manifest || exit 1
 
 einfo "All done."
 einfo "Dep tarball now at: $(portageq distdir)/${P}-deps.tar.xz!"
+
+if [[ ${LOGNAME} == sam ]] ; then
+	rsync -av -P "$(portageq distdir)/${P}-deps.tar.xz" dev.gentoo.org:~/public_html/distfiles/${CATEGORY}/${PN}
+fi
