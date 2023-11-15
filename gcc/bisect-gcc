@@ -25,29 +25,211 @@ skip() {
 	fi
 }
 
+export CBUILD="${CBUILD:-$(portageq envvar CBUILD)}"
+export CHOST="${CHOST:-$(portageq envvar CHOST)}"
+export CTARGET="${CTARGET:-$(portageq envvar CTARGET)}"
+
+if [[ -z ${CHOST} ]] ; then
+	die "No CHOST set!"
+fi
+
+#
+# Configuration
+#
+
+# Sensible defaults for sam
+if [[ ${LOGNAME} == sam ]] ; then
+	prefix="/tmp/build"
+	gitdir="/home/sam/git/gcc"
+else
+	prefix="/tmp/build"
+	gitdir="/path/to/gcc"
+
+	#prefix="/media/guest-homedirs/sam/build/bisect"
+	#gitdir="/media/guest-homedirs/sam/git/gcc"
+fi
+
+build_from_portage=0
+
+#
+# End configuration
+#
+
+# These are only used for Portage builds
 export ACCEPT_KEYWORDS="**"
 export FEATURES="ccache -collision-protect -protect-owned -userfetch -usersync -userpriv -usersandbox"
-
-#export EVCS_OFFLINE=1
+export EVCS_OFFLINE=1
 export EGIT_CLONE_TYPE=mirror
-export EGIT_OVERRIDE_REPO_GCC=file:///home/sam/git/gcc
+export EGIT_OVERRIDE_REPO_GCC="file:///${gitdir}"
 export EGIT_OVERRIDE_COMMIT_GCC=$(git rev-parse HEAD)
 #export EGIT_OVERRIDE_COMMIT_GCC=e4b5fec75aa8d0d01f6e042ec2888ef92eaa932a
 
-repo_path="$(portageq get_repo_path ${EROOT:-/} gentoo)"
-gcc_ver=$(<gcc/BASE-VER)
-gcc_ver=${gcc_ver%%.*}
+if [[ -z ${prefix} ]] ; then
+	die "No prefix set!"
+fi
 
-fatal cd ~/git/gcc
-# --enable-checking=all
-EXTRA_ECONF="--disable-bootstrap" USE="vanilla -rust -openmp -fortran -pgo -lto -jit" skip ebuild ${repo_path}/sys-devel/gcc/gcc-${gcc_ver}.*.9999.ebuild digest clean merge
+if [[ -z ${gitdir} || ! -d ${gitdir} ]] ; then
+	die "No gitdir set (or empty)!"
+fi
+
+fatal cd ${gitdir}
+
+# Aggressively clean up the existing build
+make clean
+fatal rm -rf ${gitdir}/host-${CHOST} build-${CHOST}/ host-${CHOST}/ ${CHOST}/
+git clean -fdx
+fatal rm -rf ${prefix}
+fatal mkdir -p ${prefix}
+
+export CFLAGS="-O2 -fdiagnostics-color=always -fno-checking"
+export CXXFLAGS="${CFLAGS}"
+export LDFLAGS="-Wl,-O1 -Wl,--as-needed"
+
+export STAGE1_CFLAGS="${STAGE1_CFLAGS:-${CFLAGS}}"
+export STAGE1_LDFLAGS="${STAGE1_LDFLAGS:-${LDFLAGS}}"
+export BOOT_CFLAGS="${BOOT_CFLAGS:-${CFLAGS}}"
+export BOOT_LDFLAGS="${BOOT_LDFLAGS:-${LDFLAGS}}"
+export LDFLAGS_FOR_TARGET="${LDFLAGS_FOR_TARGET:-${LDFLAGS}}"
+
+gcc_make_args=(
+	CFLAGS="${CFLAGS}"
+	CXXFLAGS="${CXXFLAGS}"
+	LDFLAGS="${LDFLAGS}"
+	STAGE1_CFLAGS="${STAGE1_CFLAGS}"
+	STAGE1_LDFLAGS="${STAGE1_LDFLAGS}"
+	BOOT_CFLAGS="${BOOT_CFLAGS}"
+	BOOT_LDFLAGS="${BOOT_LDFLAGS}"
+	LDFLAGS_FOR_TARGET="${LDFLAGS_FOR_TARGET}"
+)
+
+gcc_config_args=(
+	--build="${CBUILD:-${CHOST}}"
+	--host="${CHOST}"
+	--target="${CTARGET:-${CHOST}}"
+
+	--disable-analyzer
+	--disable-bootstrap
+	--disable-cet
+	--disable-default-pie
+	--disable-default-ssp
+	# XXX: This ends up breaking the build on some versions
+	#--disable-fixincludes
+	--disable-gcov
+	--disable-libada
+	--disable-libatomic
+	--disable-libgomp
+	--disable-libitm
+	--disable-libquadmath
+	--disable-libsanitizer
+	--disable-libssp
+	--disable-libstdcxx-pch
+	--disable-libvtv
+	--disable-lto
+	--disable-multilib
+	--disable-nls
+	--disable-objc-gc
+	--disable-systemtap
+	--disable-werror
+	--enable-languages=c,c++
+	--prefix=${prefix}
+
+	--with-checking=yes,extra,rtl
+
+	--without-libatomic
+	--without-libbacktrace
+	--without-isl
+	--without-zstd
+	--with-system-zlib
+
+	--disable-bootstrap
+	# This only controls support for LTO, not building with it
+	--enable-lto
+
+	# XXX: Things we often want to toggle between builds depending on needs.
+	# XXX: Put things here to override earlier defaults
+	#--enable-libstdcxx
+	#
+	#--with-checking=release
+	#--disable-checking
+	#--disable-stage1-checking
+	#
+	#--enable-multilib
+	#--with-multilib-list=m32,m64
+)
 
 # Try hard to make sure we're actually using the newly-built thing
-skip gcc-config x86_64-pc-linux-gnu-${gcc_ver}
-skip source /etc/profile
-skip export CC=gcc-${gcc_ver}
-skip export CXX=g++-${gcc_ver}
+# TODO: skip on all of these?
+if [[ ${build_from_portage} == 1 ]] ; then
+	repo_path="$(portageq get_repo_path ${EROOT:-/} gentoo)"
+	gcc_ver=$(<gcc/BASE-VER)
+	gcc_ver=${gcc_ver%%.*}
 
-fatal sudo ebuild ${repo_path}/media-libs/harfbuzz/harfbuzz-6.0.0.ebuild clean compile
+	EXTRA_ECONF="${gcc_config_args[@]}" USE="vanilla -rust -openmp -fortran -pgo -lto -jit" skip ebuild ${repo_path}/sys-devel/gcc/gcc-${gcc_ver}.*.9999.ebuild digest clean merge
+
+	sudo gcc-config ${CHOST}-${gcc_ver}
+	source /etc/profile
+	export CC=${CHOST}-gcc-${gcc_ver}
+	export CXX=${CHOST}-g++-${gcc_ver}
+else
+	skip ./configure "${gcc_config_args[@]}"
+	skip make "${gcc_make_args[@]}" -Oline V=1
+	skip make -Oline install
+fi
+
+#
+# Bug-specific testcase goes here
+#
+
+# At this point, your GCC is at ${prefix}/bin/gcc, ${prefix}/bin/g++, etc.
+
+# Various examples to adapt as necessary.
+if false ; then
+	#fatal cd ~/git/gcc/host-x86_64-pc-linux-gnu/gcc
+
+	#rm output.txt
+	#./xgcc -B$(pwd) -c -std=c++20 /tmp/foo.cxx &> output.txt
+	#if grep -q "/tmp/foo.cxx:.*error:" output.txt ; then
+	#      exit 1
+	#fi
+
+	#/tmp/bisect/bin/g++ -O2 -Wall -c /tmp/foo.cxx
+	#/tmp/bisect/bin/gcc -c -O2 -march=alderlake -g /tmp/foo.cxx
+	#/tmp/bisect/bin/g++ -Wfatal-errors '-Werror=stringop-overflow' '-march=nehalem' -O3 -std=c++17 /tmp/foo.cxx -c
+	${prefix}/bin/g++ -Wfatal-errors -O2 /tmp/SkOpAngle.ii
+	ret=$?
+
+	case ${ret} in
+		0)
+			exit 0
+			;;
+		*)
+			## Something else happened, skip
+			#exit 125
+			exit 1
+			;;
+	esac
+fi
+
+# Timeout example.
+if false ; then
+	for x in $(seq 1); do
+		# We deliberately exit *0* if it fails because we're bisecting for the bad commit, not good
+		timeout 1m /tmp/bisect/bin/g++ -Wfatal-errors -O2 /tmp/reduced.ii -c
+		timeout_result=$?
+
+		case ${timeout_result} in
+			124)
+				# Timed out
+				exit 1
+				;;
+			0)
+				;;
+			*)
+				# Something else happened, skip
+				exit 125
+				;;
+			esac
+		done
+fi
 
 exit 0
