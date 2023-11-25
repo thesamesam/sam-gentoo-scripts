@@ -58,6 +58,8 @@ A collection of scripts for Gentoo development.
 
 * `generate-ccache-docs`: generate man page tarball for `dev-util/ccache`
 
+* `generate-libnet-docs`: generate man page tarball for `net-libs/libnet`
+
 * `gather-keys`: generate a clean keyring containing keys for a list of
    given fingerprints after scraping keyservers for them.
 
