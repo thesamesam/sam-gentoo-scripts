@@ -60,6 +60,8 @@ A collection of scripts for Gentoo development.
 
 * `generate-libnet-docs`: generate man page tarball for `net-libs/libnet`
 
+* `generate-pipewire-docs`: generate man page tarball for `media-video/pipewire`
+
 * `gather-keys`: generate a clean keyring containing keys for a list of
    given fingerprints after scraping keyservers for them.
 

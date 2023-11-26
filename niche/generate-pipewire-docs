@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+if [[ ${BASH_SOURCE} = */* ]]; then
+	SCRIPT_DIR=${BASH_SOURCE%/*}/
+else
+	SCRIPT_DIR=./
+fi
+
+. ${SCRIPT_DIR}/generate-docs.bashlib || { echo "Failed to source generate-docs.bashlib!" ; exit 1 ; }
+
+export ABI_X86="64" # we don't want to build multiple variants & easier to glob below
+export PIPEWIRE_DOCS_PREBUILT=0
+
+generate-docs_copy_docs() {
+	ebegin "Copying man pages to ${dir}/${P}-docs"
+	cp -ra "${WORKDIR}"/../image/usr/share/man "${dir}"/${P}-docs/
+	eend $? || exit 1
+}
+
+generate-docs $@
