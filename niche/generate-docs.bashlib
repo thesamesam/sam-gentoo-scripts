@@ -28,12 +28,27 @@ generate-docs_setup_environment() {
 	local docs_prebuilt_set="${PN^^}_DOCS_PREBUILT"
 	local use_prefix=""
 	if [[ -n "${!docs_prebuilt_set}" ]] ; then
-		use_prefix="USE='doc man'"
+		use_prefix=(env USE='doc man')
 	fi
 
 	ebuild ${repo_path}/${1} manifest || exit 1
-	sudo "${use_prefix}" FEATURES="-test" PORTDIR_OVERLAY="${repo_path}" emerge --quiet --oneshot --onlydeps =${PF} || { eerror "Installing doc dependencies for =${PF} failed! Exiting!" ; exit 1 ; }
-	sudo "${use_prefix}" FEATURES="-test" PORTDIR_OVERLAY="${repo_path}" emerge --quiet --oneshot =${PF} || { eerror "Installing doc dependencies for =${PF} failed! Exiting!" ; exit 1 ; }
+
+	# We can't guarantee that sudo is installed; but if we find it prefer sudo.
+	if command -v sudo >/dev/null 2>&1; then
+		ELEVATE_CMD="sudo"
+	fi
+
+	if ! [[ "$ELEVATE_CMD" ]] && command -v doas >/dev/null 2>&1; then
+		ELEVATE_CMD="doas"
+	fi
+
+	if ! [[ "$ELEVATE_CMD" ]]; then
+		echo "Error: Neither sudo nor doas is available."
+		exit 1
+	fi
+
+	"$ELEVATE_CMD" "${use_prefix[@]}" env FEATURES="-test" env PORTDIR_OVERLAY="${repo_path}" emerge --quiet --oneshot --onlydeps =${PF} || { eerror "Installing doc dependencies for =${PF} failed! Exiting!" ; exit 1 ; }
+	"$ELEVATE_CMD" "${use_prefix[@]}" env FEATURES="-test" env PORTDIR_OVERLAY="${repo_path}" emerge --quiet --oneshot =${PF} || { eerror "Installing doc dependencies for =${PF} failed! Exiting!" ; exit 1 ; }
 
 	# We need this to flush out a previous doc entry from a failed attempt
 	FEATURES="-test" USE="doc man" ebuild ${repo_path}/${1} manifest
