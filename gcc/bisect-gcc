@@ -39,10 +39,12 @@ fi
 
 # Sensible defaults for sam
 if [[ ${LOGNAME} == sam ]] ; then
-	prefix="/tmp/build"
+	prefix="/tmp/gcc"
+	builddir="/tmp/build"
 	gitdir="/home/sam/git/gcc"
 else
-	prefix="/tmp/build"
+	prefix="/tmp/gcc"
+	builddir="/tmp/build"
 	gitdir="/path/to/gcc"
 
 	#prefix="/media/guest-homedirs/sam/build/bisect"
@@ -68,16 +70,23 @@ if [[ -z ${prefix} ]] ; then
 	die "No prefix set!"
 fi
 
+if [[ -z ${builddir} ]] ; then
+	die "No builddir set (or empty)!"
+fi
+
 if [[ -z ${gitdir} || ! -d ${gitdir} ]] ; then
 	die "No gitdir set (or empty)!"
 fi
 
-fatal cd ${gitdir}
+fatal mkdir -p ${builddir}
+fatal cd ${builddir}
 
 # Aggressively clean up the existing build
 make clean
-fatal rm -rf ${gitdir}/host-${CHOST} build-${CHOST}/ host-${CHOST}/ ${CHOST}/
-git clean -fdx
+fatal rm -rf build-${CHOST}/ host-${CHOST}/ ${CHOST}/
+if [[ -d .git ]] ; then
+	git clean -fdx
+fi
 fatal rm -rf ${prefix}
 fatal mkdir -p ${prefix}
 
@@ -171,7 +180,7 @@ if [[ ${build_from_portage} == 1 ]] ; then
 	export CC=${CHOST}-gcc-${gcc_ver}
 	export CXX=${CHOST}-g++-${gcc_ver}
 else
-	skip ./configure "${gcc_config_args[@]}"
+	skip "${gitdir}"/configure "${gcc_config_args[@]}"
 	skip make "${gcc_make_args[@]}" -Oline V=1
 	skip make -Oline install
 fi
