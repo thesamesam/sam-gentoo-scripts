@@ -101,6 +101,7 @@ export BOOT_LDFLAGS="${BOOT_LDFLAGS:-${LDFLAGS}}"
 export LDFLAGS_FOR_TARGET="${LDFLAGS_FOR_TARGET:-${LDFLAGS}}"
 
 gcc_make_args=(
+	-j$(nproc) -l$(nproc)
 	CFLAGS="${CFLAGS}"
 	CXXFLAGS="${CXXFLAGS}"
 	LDFLAGS="${LDFLAGS}"
