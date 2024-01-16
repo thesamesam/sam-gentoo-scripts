@@ -78,11 +78,12 @@ if [[ -z ${gitdir} || ! -d ${gitdir} ]] ; then
 	die "No gitdir set (or empty)!"
 fi
 
-fatal mkdir -p ${builddir}
-fatal cd ${builddir}
+fatal rm -rf "${builddir}"
+fatal mkdir -p "${builddir}"
+fatal cd "${builddir}"
 
 # Aggressively clean up the existing build
-make clean
+make -C "${builddir}" clean
 fatal rm -rf build-${CHOST}/ host-${CHOST}/ ${CHOST}/
 if [[ -d .git ]] ; then
 	git clean -fdx
