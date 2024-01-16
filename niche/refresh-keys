@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -u
+
+KEYSERVERS=(
+        hkps://keyserver.ubuntu.com
+        hkps://pgp.mit.edu
+        hkps://keys.gentoo.org
+        hkps://keys.openpgp.org
+	hkps://pgp.surfnet.nl
+        keyserver.pgp.com
+)
+
+for keyserver in "${KEYSERVERS[@]}" ; do
+	gpg --batch --keyserver ${keyserver} --refresh-keys
+done
