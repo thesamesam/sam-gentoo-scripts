@@ -27,7 +27,7 @@ generate-docs_setup_environment() {
 	# from ${PN^^}_DOCS_PREBUILT=0 when it's an already setup package.
 	local docs_prebuilt_set="${PN^^}_DOCS_PREBUILT"
 	local use_prefix=""
-	if [[ -n "${!docs_prebuilt_set}" ]] ; then
+	if [[ -n "${!docs_prebuilt_set}" ]] || [[ -n "${MY_DOCS_PREBUILT}" ]] ; then
 		use_prefix=(env USE='doc man')
 	fi
 

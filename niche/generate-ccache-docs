@@ -7,7 +7,7 @@ fi
 
 . ${SCRIPT_DIR}/generate-docs.bashlib || { echo "Failed to source generate-docs.bashlib!" ; exit 1 ; }
 
-export CCACHE_DOCS_PREBUILT=0
+export MY_DOCS_PREBUILT=0
 
 generate-docs_copy_docs() {
 	ebegin "Copying docs to ${dir}/${P}-docs"
