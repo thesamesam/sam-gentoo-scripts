@@ -77,7 +77,7 @@ bump_packages() {
 				git reset -q HEAD
 				git add Manifest ${P}.ebuild
 				# TODO: &>/dev/null b/c pkgdev doesn't seem to respect -q?
-				if git diff --quiet --cached --exit-code ; then
+				if git diff --quiet --cached --exit-code --no-renames ; then
 					( eindent && ewarn "Skipping because no changes to commit..." )
 				else
 					pkgdev commit -q > /dev/null || { eindent ; eerror "Failed to commit? Check!" ; exit 1 ; }
