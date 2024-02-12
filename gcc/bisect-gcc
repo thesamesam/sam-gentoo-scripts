@@ -51,6 +51,7 @@ else
 	#gitdir="/media/guest-homedirs/sam/git/gcc"
 fi
 
+CLEANUP=0
 build_from_portage=0
 
 #
@@ -78,17 +79,23 @@ if [[ -z ${gitdir} || ! -d ${gitdir} ]] ; then
 	die "No gitdir set (or empty)!"
 fi
 
-fatal rm -rf "${builddir}"
+if [[ -n ${CLEANUP} && ${CLEANUP} == 1 ]] ; then
+	fatal rm -rf "${builddir}"
+fi
+
 fatal mkdir -p "${builddir}"
 fatal cd "${builddir}"
 
-# Aggressively clean up the existing build
-make -C "${builddir}" clean
-fatal rm -rf build-${CHOST}/ host-${CHOST}/ ${CHOST}/
-if [[ -d .git ]] ; then
-	git clean -fdx
+if [[ -n ${CLEANUP} && ${CLEANUP} == 1 ]] ; then
+	# Aggressively clean up the existing build
+	make -C "${builddir}" clean
+	fatal rm -rf build-${CHOST}/ host-${CHOST}/ ${CHOST}/
+	if [[ -d .git ]] ; then
+		git clean -fdx
+	fi
+	fatal rm -rf ${prefix}
 fi
-fatal rm -rf ${prefix}
+
 fatal mkdir -p ${prefix}
 
 export CFLAGS="-O2 -fdiagnostics-color=always -fno-checking"
