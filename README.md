@@ -146,3 +146,5 @@ able to just push.
    indexes snapshots and the commit they were based on.
 
 * `bisect-gcc`: Unpolished script used for `git bisect run` when bisecting GCC.
+
+* `miscompile-reduce.sh`: Script for reducing miscompilations w/ cvise.
