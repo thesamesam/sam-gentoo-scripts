@@ -134,7 +134,6 @@ gcc_config_args=(
 	#--disable-fixincludes
 	--disable-gcov
 	--disable-libada
-	--disable-libatomic
 	--disable-libgomp
 	--disable-libitm
 	--disable-libquadmath
