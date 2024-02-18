@@ -148,10 +148,10 @@ gcc_config_args=(
 	--disable-objc-gc
 	--disable-systemtap
 	--disable-werror
-	--enable-languages=c,c++
+	--enable-languages=c,c++ #,fortran
 	--prefix=${prefix}
 
-	--with-checking=yes,extra,rtl
+	--enable-checking=release # yes,extra,rtl
 
 	--without-libatomic
 	--without-libbacktrace
@@ -159,15 +159,16 @@ gcc_config_args=(
 	--without-zstd
 	--with-system-zlib
 
-	--disable-bootstrap
 	# This only controls support for LTO, not building with it
-	--enable-lto
+	#--enable-lto
+	#--with-build-config='bootstrap-lto'
+	#--with-build-config='bootstrap-O3'
 
 	# XXX: Things we often want to toggle between builds depending on needs.
 	# XXX: Put things here to override earlier defaults
 	#--enable-libstdcxx
 	#
-	#--with-checking=release
+	#--enable-checking=release
 	#--disable-checking
 	#--disable-stage1-checking
 	#
