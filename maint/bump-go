@@ -174,6 +174,9 @@ ebegin "Creating tarball"
 		cd "${WORKDIR}" || exit 1
 	fi
 
+	# Cleanup junk
+	find "${tar_target}/cache/download" -type f -name '*.zip' -delete
+
 	LC_ALL=C TZ=UTC ${tar} ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz ${tar_target} || exit 1
 
 	mv ${P}-deps.tar.xz $(portageq distdir)/ || exit 1
