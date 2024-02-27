@@ -47,7 +47,7 @@ for dir in ${dirs[@]} ; do
 		fi
 	fi
 
-	dir=${dir/files/}
+	dir=${dir%%files/}
 
 	cd "${dir}"
 
