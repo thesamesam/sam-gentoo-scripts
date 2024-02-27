@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # TODO: could add guessed subdir into S in ebuild?
-# TODO: handle licensing
+# TODO: handle licensing via e.g. dev-go/lichen
 # TODO: handle where a vendor dir already exists
 . /lib/gentoo/functions.sh || { echo "Could not find gentoo-functions' functions.sh!" ; exit 1; }
 . "$(pkg-config iwdevtools --variable=atomf)" || { eerror "Could not find iwdevtools' atomf library! Emerge app-portage/iwdevtools?" ; exit 1; }
