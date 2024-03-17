@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 # Script used w/ cvise for https://gcc.gnu.org/PR113734 to reduce a miscompilation
+# TODO:
+# * Factor out the options needed to trigger a crash
+# * Move the exit code conditions into variables (e.g. should Valgrind crash on it?)
+# * Add MSAN variable? (Check if clang is in COMPILERS, maybe?)
+# * Add general flags var which is added for all commands, not just w/ optimisation
+# * Move timeout into var
+
 set -x
 
 # Used for tests where we check for miscompilation, also to add to compiler list for baseline (to make sure it passes sometimes)
