@@ -9,6 +9,8 @@
 
 set -x
 
+ulimit -c 0
+
 # Used for tests where we check for miscompilation, also to add to compiler list for baseline (to make sure it passes sometimes)
 BAD_COMPILER="gcc-14"
 
