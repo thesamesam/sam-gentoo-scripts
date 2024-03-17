@@ -6,6 +6,7 @@
 # * Add MSAN variable? (Check if clang is in COMPILERS, maybe?)
 # * Add general flags var which is added for all commands, not just w/ optimisation
 # * Move timeout into var
+# * Maybe have an assoc. array of cases which should fail/pass?
 
 set -x
 
