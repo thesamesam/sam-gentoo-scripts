@@ -83,6 +83,13 @@ if [[ -n ${CLEANUP} && ${CLEANUP} == 1 ]] ; then
 	fatal rm -rf "${builddir}"
 fi
 
+(
+	cd "${gitdir}"
+	git clean -fdx
+	git reset --hard HEAD
+	patch -f -p1 < /root/gcc-musl/11.4.0-50_all_calloc_libgccjit.patch || true
+)
+
 fatal mkdir -p "${builddir}"
 fatal cd "${builddir}"
 
@@ -193,6 +200,12 @@ else
 	skip make "${gcc_make_args[@]}" -Oline V=1
 	skip make -Oline install
 fi
+
+(
+	cd "${gitdir}"
+	git clean -fdx
+	git reset --hard HEAD
+)
 
 #
 # Bug-specific testcase goes here
