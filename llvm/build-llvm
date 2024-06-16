@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+: ${CC:=clang}
+: ${CXX:=clang++}
+: ${CFLAGS:=-O3 -march=znver2 -ggdb3 -fno-vect-cost-model}
+: ${CXXFLAGS:=-O3 -march=znver2 -ggdb3 -fno-vect-cost-model}
+: ${CPPFLAGS:=}
+: ${builddir:=/home/sam/data/build/llvm-project}
+: ${srcdir:=/home/sam/git/llvm-project}
+
+export CCACHE_DIR=/var/cache/ccache
+export PYTHON=$(type -P python3.11)
+export EPYTHON=python3.11
+
+components=(
+	compiler-rt
+)
+
+mkdir -p "${builddir}" || exit 1
+
+cmakeargs=(
+	-B"${builddir}"
+	-S"${srcdir}/llvm"
+	-GNinja
+
+	#-DLLVM_BUILD_LLVM_DYLIB=ON
+	#-DLLVM_EXTERNAL_LIT="${EPREFIX:-/}/usr/bin/lit"
+	#-DLLVM_LINK_LLVM_DYLIB=ON
+
+	-DBUILD_SHARED_LIBS=ON
+	-DCMAKE_BUILD_TYPE=RelWithDebInfo # Release
+	-DCMAKE_CXX_FLAGS="${CXXFLAGS}"
+	-DCMAKE_CXX_FLAGS_RELWITHDEBINFO="${CXXFLAGS}"
+	-DCMAKE_C_FLAGS="${CFLAGS}"
+	-DCMAKE_C_FLAGS_RELWITHDEBINFO="${CFLAGS}"
+        -DPython3_EXECUTABLE="${PYTHON}"
+        -DPython_EXECUTABLE="${PYTHON}"
+	-DLLVM_USE_LINKER=lld
+
+	-DLIBCXX_HARDENING_MODE="none"
+
+	-DCOMPILER_RT_INCLUDE_TESTS=ON
+	-DLLVM_BUILD_TESTS=ON
+	-DLLVM_INCLUDE_TESTS=ON
+
+	-DLLVM_CCACHE_BUILD=OFF # ON
+	-DLLVM_ENABLE_ASSERTIONS=ON
+	-DLLVM_ENABLE_BINDINGS=OFF
+	-DLLVM_ENABLE_EH=ON
+	-DLLVM_ENABLE_FFI=yes
+	-DLLVM_ENABLE_PROJECTS="llvm" # ;clang;clang-tools-extra or llvm;clang;clang-tools-extra
+	-DLLVM_ENABLE_RTTI=ON
+	-DLLVM_ENABLE_ZSTD=yes
+	-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="AMDGPU" # ;ARM;AVR;BPF;Hexagon;Lanai;LoongArch;MSP430;Mips;NVPTX;PowerPC;RISCV;Sparc;SystemZ;VE;WebAssembly;X86;XCore
+	-DLLVM_INCLUDE_BENCHMARKS=OFF
+	-DLLVM_TARGETS_TO_BUILD="AMDGPU"
+)
+
+export CC CXX CFLAGS CXXFLAGS CPPFLAGS
+
+${CMAKE:-cmake} "${cmakeargs[@]}" "$@" || exit 1
+${NINJA:-ninja} -C "${builddir}" || exit 1
+
+for component in "${components[@]}" ; do
+	mkdir -p "${builddir}-${component}" || exit 1
+	${CMAKE:-cmake} "${cmakeargs[@]}" -B "${builddir}-${component}" -S"${srcdir}/${component}" -DCOMPILER_RT_BUILD_SANITIZERS=ON -DLLVM_BUILD_TESTS=ON "$@" || exit 1
+	${NINJA:-ninja} -C "${builddir}-${component}" || exit 1
+done

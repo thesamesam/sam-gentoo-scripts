@@ -148,3 +148,7 @@ able to just push.
 * `bisect-gcc`: Unpolished script used for `git bisect run` when bisecting GCC.
 
 * `miscompile-reduce.sh`: Script for reducing miscompilations w/ cvise.
+
+### llvm
+
+* `build-llvm`: Sets args I usually want for CMake, bit like `bisect-gcc`.
