@@ -147,6 +147,8 @@ able to just push.
 
 * `bisect-gcc`: Unpolished script used for `git bisect run` when bisecting GCC.
 
+* `bisect-binutils`: Ditto.
+
 * `miscompile-reduce.sh`: Script for reducing miscompilations w/ cvise.
 
 ### llvm

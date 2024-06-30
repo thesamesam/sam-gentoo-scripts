@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+# https://wiki.gentoo.org/wiki/Bisecting_with_live_ebuilds
+# GPL-3+
+. /lib/gentoo/functions.sh || { echo "Failed to source functions.sh!" ; exit 1 ; }
+
+esyslog() {
+	: No need.
+}
+
+die() {
+	eerror "$@"
+	exit 255 # Abort the bisect process
+}
+
+fatal() {
+	einfo Running "$@"
+	"$@" || die "$@"
+}
+
+skip() {
+	einfo Running "$@"
+	if ! "$@"; then
+		ewarn Build failed, skipping: "$@"
+		exit 125
+	fi
+}
+
+export CBUILD="${CBUILD:-$(portageq envvar CBUILD)}"
+export CHOST="${CHOST:-$(portageq envvar CHOST)}"
+export CTARGET="${CTARGET:-$(portageq envvar CTARGET)}"
+
+if [[ -z ${CHOST} ]] ; then
+        die "No CHOST set!"
+fi
+
+#
+# Configuration
+#
+
+# Sensible defaults for sam
+if [[ ${LOGNAME} == sam ]] ; then
+	prefix="/tmp/binutils"
+	builddir=$(mktemp -t -d binutils.XXXXXXX)
+	srcdir="/home/sam/git/binutils-gdb"
+	#srcdir="/var/tmp/portage/sys-devel/binutils-2.42-r2/work/binutils-2.42"
+else
+	prefix="/tmp/binutils-prefix"
+	builddir=$(mktemp -t -d binutils.XXXXXXX)
+	srcdir="/tmp/binutils-gdb"
+fi
+
+if [[ -z ${prefix} ]] ; then
+	die "No prefix set!"
+fi
+
+if [[ -z ${builddir} ]] ; then
+	die "No builddir set (or empty)!"
+fi
+
+if [[ -z ${srcdir} || ! -d ${srcdir} ]] ; then
+	die "No srcdir set (or empty)!"
+fi
+
+#
+# End configuration
+#
+
+fatal mkdir -p "${builddir}"
+fatal cd "${builddir}"
+fatal mkdir -p ${prefix}
+
+export CFLAGS="-O3 -march=native -mtls-dialect=gnu2 -pipe"
+export CXXFLAGS="-O3 -march=native -mtls-dialect=gnu2 -pipe"
+export LDFLAGS="-Wl,-O1 -Wl,--as-needed"
+
+export STAGE1_CFLAGS="${STAGE1_CFLAGS:-${CFLAGS}}"
+export STAGE1_LDFLAGS="${STAGE1_LDFLAGS:-${LDFLAGS}}"
+export BOOT_CFLAGS="${BOOT_CFLAGS:-${CFLAGS}}"
+export BOOT_LDFLAGS="${BOOT_LDFLAGS:-${LDFLAGS}}"
+export CFLAGS_FOR_TARGET="${CFLAGS_FOR_TARGET:-${CFLAGS}}"
+export LDFLAGS_FOR_TARGET="${LDFLAGS_FOR_TARGET:-${LDFLAGS}}"
+
+cd "${builddir}" || exit 1
+einfo "srcdir: ${srcdir}"
+einfo "builddir: ${builddir}"
+
+binutils_make_args=(
+	-Oline
+	-j$(nproc) -l$(nproc)
+	V=1
+	CFLAGS="${CFLAGS}"
+	CXXFLAGS="${CXXFLAGS}"
+	LDFLAGS="${LDFLAGS}"
+	STAGE1_CFLAGS="${STAGE1_CFLAGS}"
+	STAGE1_LDFLAGS="${STAGE1_LDFLAGS}"
+	BOOT_CFLAGS="${BOOT_CFLAGS}"
+	BOOT_LDFLAGS="${BOOT_LDFLAGS}"
+	CFLAGS_FOR_TARGET="${CFLAGS_FOR_TARGET}"
+	LDFLAGS_FOR_TARGET="${LDFLAGS_FOR_TARGET}"
+	CFLAGS="${CFLAGS}"
+	CXXFLAGS="${CXXFLAGS}"
+	LDFLAGS="${LDFLAGS}"
+)
+
+binutils_config_args=(
+	--prefix="${prefix}"
+
+	--build="${CBUILD}"
+	--host="${CHOST}"
+	--target="${CTARGET}"
+
+	--enable-plugins
+	--without-included-gettext
+	--with-system-zlib
+	#--enable-targets=all
+	#--enable-64-bit-bfd
+	--enable-secureplt
+	--enable-default-hash-style=gnu
+	--disable-dependency-tracking
+	--disable-silent-rules
+	--enable-obsolete
+	--enable-shared
+	--enable-threads
+	--enable-relro
+	--enable-install-libiberty
+	--enable-textrel-check=error
+	--enable-new-dtags
+
+	--disable-jansson
+	--disable-werror
+	--disable-static
+
+	--disable-cet
+	--disable-gdb
+	--disable-gdbserver
+	--disable-gprofng
+	--disable-libbacktrace
+	--disable-libdecnumber
+	--disable-readline
+	--disable-sim
+
+	--without-stage1-ldflags
+	--without-debuginfod
+	--without-msgpack
+	--without-zstd
+
+	--enable-warn-execstack=yes
+	--enable-warn-rwx-segments=yes
+	--enable-default-execstack=no
+	--disable-pgo-build
+	--enable-colored-disassembly
+)
+
+skip "${srcdir}"/configure "${binutils_config_args[@]}"
+skip make "${binutils_make_args[@]}" all-ld
+make "${binutils_make_args[@]}" check-ld || exit 1 # RUNTESTFLAGS="input-remap.exp" || exit 1
+#skip make -Oline install
+
+#${builddir}/gas/as-new /tmp/foo.s -O2 || exit 1
+
+exit 0
