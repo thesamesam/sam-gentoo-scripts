@@ -149,6 +149,8 @@ able to just push.
 
 * `bisect-binutils`: Ditto.
 
+* `bisect-gdb`: Ditto.
+
 * `miscompile-reduce.sh`: Script for reducing miscompilations w/ cvise.
 
 ### llvm
