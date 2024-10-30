@@ -3,6 +3,13 @@
 # GPL-3+
 . /lib/gentoo/functions.sh || { echo "Failed to source functions.sh!" ; exit 1 ; }
 
+# TODO:
+# * Add "profiles" (all lang, just C/C++)
+# * Optionally build a fast compiler first if $CC is built with lots of checking
+# * Maybe more cleanly put all the examples into functions to call/comment out
+# * Maintain commit ranges where we know e.g. --disable-fixincludes works/doesn't
+# * elfshaker integration/at least seeding it opportunistically?
+
 esyslog() {
 	: No need.
 }
