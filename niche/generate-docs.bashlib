@@ -10,6 +10,8 @@ generate-docs_setup_environment() {
 	export PORTAGE_TMPDIR=${PORTAGE_TMPDIR:-/tmp/${0##*/}}
 	export PORTAGE_USERNAME="$(whoami)"
 	export PORTAGE_WORKDIR_MODE="775"
+	# Make reproducible tarballs. Clobber timestamps, sort files, and set ownership.
+	export REPRODUCIBLE_TAR_ARGS="--mtime="${SOURCE_DATE_EPOCH:-1970-01-01}" --sort=name --owner=portage --group=portage"
 	export XZ_DEFAULTS="-9 -T 0"
 
 	if [[ ${PWD} == */${CATEGORY}/${PN} ]] ; then
@@ -76,7 +78,7 @@ generate-docs_create_tarball() {
 	# within the tarball for posterity.
 	cp {${0},$(dirname ${BASH_SOURCE}/generate-docs.bashlib)} "${dir}"/${P}-docs/ || { eerror "Failed to embed script within tarball. Exiting!" ; exit 1 ; }
 
-	tar -caf "${dir}"/${P}-docs.tar.xz -C "${dir}" ${P}-docs/
+	tar ${REPRODUCIBLE_TAR_ARGS} -caf "${dir}"/${P}-docs.tar.xz -C "${dir}" ${P}-docs/
 	eend ${?} || { eerror "Creating tarball failed!" ; exit 1 ; }
 
 	einfo "Tarball at ${dir}/${P}-docs.tar.xz"
