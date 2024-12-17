@@ -1,0 +1,93 @@
+#!/bin/bash
+#
+# See `print_build_commands` for building the binpkgs themselves, and
+# `print_upload_commands` for retrieving them and uploading to dev.gentoo.org.
+print_build_commands() {
+	# For easy copy-pasting
+	printf "# Printing build commands:\n"
+	cat <<-EOF
+	systemd-nspawn -D /srv/chroots/stage3-amd64-hardened-systemd-20241214T201851Z \\
+		--bind=/srv/chroots/binpkgs/amd64-ada-bootstrap:/var/cache/binpkgs \\
+		--bind-ro=/var/db/repos/gentoo \\
+		--bind=/var/cache/distfiles \\
+		--capability CAP_SYS_ADMIN \\
+		--suppress-sync=true \\
+		-M amd64-ada-bootstrap \\
+		--background=
+	emerge -vn eselect-repository crossdev
+	eselect repository create crossdev
+	echo 'FEATURES="\${FEATURES} buildpkg"' >> /etc/portage/make.conf
+	echo 'BINPKG_FORMAT="gpkg"' >> /etc/portage/make.conf
+	echo 'BINPKG_COMPRESS="xz"' >> /etc/portage/make.conf
+	echo 'BINPKG_COMPRESS_FLAGS_XZ="-9e"' >> /etc/portage/make.conf
+	bash ~/build-ada-bootstraps
+	EOF
+	printf "\n"
+}
+
+print_upload_commands() {
+	# For easy copy-pasting
+	printf "# Printing upload commands:\n"
+	cat <<-EOF
+	ADA_CHROOT=/srv/chroots/stage3-amd64-hardened-systemd-20241214T201851Z
+	readarray -d '' -t binpkgs < <(find \${ADA_CHROOT}/usr/*/var/cache/binpkgs/sys-devel/gcc/gcc-14*.gpkg.tar -print0)
+	for binpkg in "\${binpkgs[@]}" ; do
+		target=\${binpkg#\${ADA_CHROOT}/usr/}
+		target=\${target%/var/cache/binpkgs/*}
+		sudo cp -v \${binpkg} /var/cache/distfiles/ada-bootstrap-14-\${target}.gpkg.tar
+		rsync --mkpath -av -P /var/cache/distfiles/ada-bootstrap-14-\${target}.gpkg.tar dev.gentoo.org:~/public_html/distfiles/\${CATEGORY}/\${PN}/ada-bootstrap-14-\${target}.gpkg.tar
+	done
+	EOF
+}
+
+build_crosses() {
+	set -x
+
+	TARGETS=(
+		aarch64-unknown-linux-gnu
+		alpha-unknown-linux-gnu
+		arm-unknown-linux-gnu
+		armv6j-softfp-linux-gnueabi
+		armv6j-unknown-linux-gnueabihf
+		armv7a-softfp-linux-gnueabi
+		armv7a-unknown-linux-gnueabihf
+		loongarch64-unknown-linux-gnu
+		m68k-unknown-linux-gnu
+		powerpc-unknown-linux-gnu
+		powerpc64-unknown-linux-gnu
+		powerpc64le-unknown-linux-gnu
+		riscv32-unknown-linux-gnu
+		riscv64-unknown-linux-gnu
+		s390-ibm-linux-gnu
+		s390x-ibm-linux-gnu
+		sparc64-unknown-linux-gnu
+
+		# TODO: x86, mips, hppa, other arm
+	)
+
+	for CHOST in "${TARGETS[@]}" ; do
+		yes | crossdev -C ${CHOST}
+
+		USE=ada crossdev ${CHOST} --ex-gcc -S || continue
+
+		sed -i -e 's:-O2:-Oz:' "/usr/${CHOST}/etc/portage/make.conf"
+		sed -i -e 's: ~${ARCH}::' "/usr/${CHOST}/etc/portage/make.conf"
+		echo 'BINPKG_FORMAT="gpkg"' >> "/usr/${CHOST}/etc/portage/make.conf"
+		echo 'BINPKG_COMPRESS="xz"' >> "/usr/${CHOST}/etc/portage/make.conf"
+		echo 'BINPKG_COMPRESS_FLAGS_XZ="-9e"' >> "/usr/${CHOST}/etc/portage/make.conf"
+
+		mkdir "/usr/${CHOST}/etc/portage/package.use"
+		echo '*/* lto' >> "/usr/${CHOST}/etc/portage/package.use/lto"
+                echo "sys-devel/gcc lto custom-cflags" >> "/usr/${CHOST}/etc/portage/package.use/gcc"
+		echo "sys-devel/gcc -fortran -openmp -sanitize -nls" >> "/usr/${CHOST}/etc/portage/package.use/gcc"
+
+		mkdir "/usr/${CHOST}/etc/portage/profile/package.use.mask"
+		echo "sys-devel/gcc -custom-cflags" >> "/usr/${CHOST}/etc/portage/profile/package.use.mask/gcc"
+
+		USE=ada ${CHOST}-emerge -v1 sys-devel/gcc
+	done
+}
+
+#print_build_commands
+print_upload_commands
+#build_crosses
