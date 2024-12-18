@@ -72,7 +72,8 @@ build_crosses() {
 		yes | crossdev -C ${CHOST}
 
 		# TODO: The -S and (~)${ARCH} assumption/sed here + below
-		# isn't right for arches with no stable keywords.
+		# isn't right for arches with no stable keywords. Maybe we
+		# can grep arches.desc + profiles for CHOST to map to that.
 		USE=ada crossdev ${CHOST} --ex-gcc -S || continue
 
 		sed -i -e 's:-O2:-Oz:' "/usr/${CHOST}/etc/portage/make.conf"
