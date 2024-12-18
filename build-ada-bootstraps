@@ -30,6 +30,9 @@ print_upload_commands() {
 	printf "# Printing upload commands:\n"
 	cat <<-EOF
 	ADA_CHROOT=/srv/chroots/stage3-amd64-hardened-systemd-20241214T201851Z
+	CATEGORY=dev-lang
+	PN=ada-bootstrap
+
 	readarray -d '' -t binpkgs < <(find \${ADA_CHROOT}/usr/*/var/cache/binpkgs/sys-devel/gcc/gcc-14*.gpkg.tar -print0)
 	for binpkg in "\${binpkgs[@]}" ; do
 		target=\${binpkg#\${ADA_CHROOT}/usr/}
