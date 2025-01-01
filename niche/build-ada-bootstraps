@@ -90,7 +90,7 @@ build_crosses() {
 
 		mkdir "/usr/${CHOST}/etc/portage/package.use"
 		echo '*/* lto' >> "/usr/${CHOST}/etc/portage/package.use/lto"
-                echo "sys-devel/gcc lto custom-cflags" >> "/usr/${CHOST}/etc/portage/package.use/gcc"
+		echo "sys-devel/gcc lto custom-cflags" >> "/usr/${CHOST}/etc/portage/package.use/gcc"
 		echo "sys-devel/gcc -fortran -openmp -sanitize -nls" >> "/usr/${CHOST}/etc/portage/package.use/gcc"
 
 		mkdir "/usr/${CHOST}/etc/portage/profile/package.use.mask"
