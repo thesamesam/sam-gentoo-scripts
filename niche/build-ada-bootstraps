@@ -1,5 +1,9 @@
 #!/bin/bash
 #
+# When using this script, please describe in detail in the commit message
+# for the resultant binaries which environment was used (e.g. stage3 tarball
+# name, ::gentoo commit/date+time, stable or not, ...)
+#
 # See `print_build_commands` for building the binpkgs themselves, and
 # `print_upload_commands` for retrieving them and uploading to dev.gentoo.org.
 print_build_commands() {
