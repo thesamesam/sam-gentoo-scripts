@@ -54,6 +54,8 @@ build_crosses() {
 		armv6j-unknown-linux-gnueabihf
 		armv7a-softfp-linux-gnueabi
 		armv7a-unknown-linux-gnueabihf
+		hppa1.1-unknown-linux-gnu
+		hppa2.0-unknown-linux-gnu
 		loongarch64-unknown-linux-gnu
 		m68k-unknown-linux-gnu
 		powerpc-unknown-linux-gnu
@@ -64,13 +66,6 @@ build_crosses() {
 		s390-ibm-linux-gnu
 		s390x-ibm-linux-gnu
 		sparc64-unknown-linux-gnu
-
-		loongarch64-unknown-linux-gnu
-		m68k-unknown-linux-gnu
-		s390-ibm-linux-gnu
-		s390x-ibm-linux-gnu
-		hppa2.0-unknown-linux-gnu
-		hppa1.1-unknown-linux-gnu
 
 		# TODO: x86, mips, other arm(?)
 	)
