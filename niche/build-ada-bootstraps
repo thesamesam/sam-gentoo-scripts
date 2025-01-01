@@ -65,7 +65,14 @@ build_crosses() {
 		s390x-ibm-linux-gnu
 		sparc64-unknown-linux-gnu
 
-		# TODO: x86, mips, hppa, other arm
+		loongarch64-unknown-linux-gnu
+		m68k-unknown-linux-gnu
+		s390-ibm-linux-gnu
+		s390x-ibm-linux-gnu
+		hppa2.0-unknown-linux-gnu
+		hppa1.1-unknown-linux-gnu
+
+		# TODO: x86, mips, other arm(?)
 	)
 
 	for CHOST in "${TARGETS[@]}" ; do
