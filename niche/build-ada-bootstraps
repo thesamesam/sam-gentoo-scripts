@@ -115,11 +115,15 @@ build_crosses() {
 		mkdir "/usr/${CHOST}/etc/portage/profile/package.use.mask"
 		echo "sys-devel/gcc -custom-cflags" >> "/usr/${CHOST}/etc/portage/profile/package.use.mask/gcc"
 
-		USE=ada ${CHOST}-emerge -v1 sys-devel/gcc
+		if [[ -n ${GCC_VER} ]] ; then
+			USE=ada ${CHOST}-emerge -v1 "=sys-devel/gcc-${GCC_VER%%.*}*"
+		else
+			USE=ada ${CHOST}-emerge -v1 sys-devel/gcc
+		fi
 	done
 }
 
 GCC_VER=12.5
-print_build_commands
+#print_build_commands
 #print_upload_commands
-#build_crosses
+build_crosses
