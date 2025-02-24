@@ -30,7 +30,10 @@ for commit in "${commits[@]}" ; do
 
 	is_wrong_code=0
 	for bug_num in "${bug_nums[@]}" ; do
-		if grep -q "${bug_num}" bugs-wrong-code.csv ; then
+		# If the bug number is too short, the regex got a dodgy match.
+		[[ ${#bug_num} -lt 5 ]] && continue
+
+		if grep -Eq "^${bug_num}," bugs-wrong-code.csv ; then
 			is_wrong_code=1
 			break
 		fi
