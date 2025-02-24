@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# TODO:
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=113385
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=13421
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109170
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107617 (maybe)
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107248
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=103202
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87188
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86511
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=62025
+# all hppa bugs I've filed?
+. /lib/gentoo/functions.sh
+
+readarray -d '' -t commits < <(
+	git -C /home/sam/git/gcc log \
+		--grep="\s(?:(?:bug|PR|BZ)\s+\#?\s*(?:[a-z0-9+-]+\/)?(?:\/)?|Bug:\s+https:\/\/$bug_host\/bugzilla\/show_bug\.cgi\?id=)(\d+)(.*)$" \
+		-P \
+		master \
+		--format="format:%H" \
+		-z
+	)
+
+for commit in "${commits[@]}" ; do
+	bug_nums=$(
+		git -C /home/sam/git/gcc log "${commit}~1..${commit}" |
+		grep -P "\s(?:(?:bug|PR|BZ)\s+\#?\s*(?:[a-z0-9+-]+\/)?(?:\/)?|Bug:\s+https:\/\/$bug_host\/bugzilla\/show_bug\.cgi\?id=)(\d+)(.*)$"
+	)
+	bug_nums=( $(echo ${bug_nums} | grep -Eo "([0-9]+)") )
+
+	is_wrong_code=0
+	for bug_num in "${bug_nums[@]}" ; do
+		if grep -q "${bug_num}" bugs-wrong-code.csv ; then
+			is_wrong_code=1
+			break
+		fi
+	done
+	[[ ${is_wrong_code} == 1 ]] || continue
+
+	git -C /home/sam/git/gcc diff --numstat "${commit}~1..${commit}" &> /tmp/x.txt
+	if ! grep -qiE "(test|testsuite|testcase)" /tmp/x.txt ; then
+		einfo "got commit: ${commit}"
+		eindent
+		einfo "summary: $(git -C /home/sam/git/gcc log --format='format:%s' ${commit}~1..${commit})"
+		einfo "check: git -C /home/sam/git/gcc log -p ${commit}~1..${commit}"
+		#for bug_num in "${bug_nums[@]}" ; do
+		#	einfo "bug: https://gcc.gnu.org/PR${bug_num}"
+		#done
+		eoutdent
+	fi
+done
