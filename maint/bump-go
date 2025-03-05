@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # TODO: could add guessed subdir into S in ebuild?
-# TODO: handle licensing via e.g. dev-go/lichen
 # TODO: handle where a vendor dir already exists
 . /lib/gentoo/functions.sh || { echo "Could not find gentoo-functions' functions.sh!" ; exit 1; }
 . "$(pkg-config iwdevtools --variable=atomf)" || { eerror "Could not find iwdevtools' atomf library! Emerge app-portage/iwdevtools?" ; exit 1; }
@@ -180,6 +179,39 @@ ebegin "Creating tarball"
 	LC_ALL=C TZ=UTC ${tar} ${REPRODUCIBLE_TAR_ARGS} -acf ${P}-deps.tar.xz ${tar_target} || exit 1
 
 	mv ${P}-deps.tar.xz $(portageq distdir)/ || exit 1
+)
+eend $? || exit 1
+
+# 4. collect licenses
+ebegin "Collecting licenses"
+(
+	cd "${S}" || exit 1
+	export GOCACHE="${PORTAGE_TMPDIR}/go-cache"
+	export GOMODCACHE="${PORTAGE_TMPDIR}/go-mod"
+	readarray -t LICENSES < <(go-licenses report ./... | cut -d',' -f3 | sort -u)
+
+	MAPPING_FILE=$(portageq get_repo_path / gentoo)/metadata/license-mapping.conf
+
+	readarray -t GENTOO_LICENSES < <(
+		for license in "${LICENSES[@]}"; do
+			VAL=$(grep -Po "^${license} = \K.*" "${MAPPING_FILE}")
+			if [[ -n ${VAL} ]]; then
+				echo "${VAL}"
+			else
+				ewarn "Unknown license: ${license}"
+				echo "${license}"
+			fi
+		done | sort -u
+	)
+
+	ebuild=${ORIGINAL_PWD}/${CATEGORY}/${PN}/${ebuild}
+
+	if grep -q "# Dependent licenses" ${ORIGINAL_PWD}/${ebuild} ; then
+		# TODO: we need to sed the previous block with the new one. I've failed to build a sed expression for that
+		sed -i -e "/LICENSE=/ a# Dependent licenses\nLICENSE+=\" $(printf " %s" "${GENTOO_LICENSES[@]}")\"" ${ebuild} || exit 1
+	else
+		sed -i -e "/LICENSE=/ a# Dependent licenses\nLICENSE+=\" $(printf " %s" "${GENTOO_LICENSES[@]}")\"" ${ebuild} || exit 1
+	fi
 )
 eend $? || exit 1
 
