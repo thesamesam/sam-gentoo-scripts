@@ -48,6 +48,12 @@ sed -i -e '/^EAPI=.*/a\\nCRATES=" "' ${ebuild} || exit 1
 einfo "Sedding out 'crates' tarball line if exists"
 sed -i -E "/^(\t+)?SRC_URI.*crates/ s/^/#/" ${ebuild} || exit 1
 
+if grep -q -Fe 'https://github.com/gentoo-crate-dist' ${ebuild}; then
+	ewarn "Detected usage of gentoo-crate-dist, won't create crates tarball"
+	EXISTING_CRATES_TARBALL=1
+	PYCARGOEBUILD_EXTRA_ARGS=( --no-write-crate-tarball )
+fi
+
 # 3. Fetch!
 einfo "Fetching ${P}"
 ebuild ${ebuild} manifest || exit 1
@@ -65,7 +71,7 @@ ebuild ${ebuild} clean unpack || exit 1
 export S=$(sed -nr 's/^declare -x S="(.*)"/\1/p' "${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/temp/environment)
 
 ebegin "Running 'pycargoebuild -i ${ebuild} -c ${S}'"
-pycargoebuild -i ${ebuild} -c ${S} || exit 1
+pycargoebuild -i ${ebuild} -c ${S} "${PYCARGOEBUILD_EXTRA_ARGS[@]}" || exit 1
 eend $? || exit 1
 
 # 5. Undo the sed we did earlier to the ebuild
@@ -77,6 +83,8 @@ einfo "Generating manifest"
 ebuild ${ebuild} clean manifest || exit 1
 
 einfo "All done."
-einfo "Dep tarball now at: $(portageq distdir)/${P}-deps.tar.xz!"
 
-rsync --mkpath -av -P "$(portageq distdir)/${P}-crates.tar.xz" dev.gentoo.org:~/public_html/distfiles/${CATEGORY}/${PN}/${P}-crates.tar.xz
+if [[ -z ${EXISTING_CRATES_TARBALL} ]]; then
+	einfo "Dep tarball now at: $(portageq distdir)/${P}-deps.tar.xz!"
+	rsync --mkpath -av -P "$(portageq distdir)/${P}-crates.tar.xz" dev.gentoo.org:~/public_html/distfiles/${CATEGORY}/${PN}/${P}-crates.tar.xz
+fi
