@@ -85,6 +85,6 @@ ebuild ${ebuild} clean manifest || exit 1
 einfo "All done."
 
 if [[ -z ${EXISTING_CRATES_TARBALL} ]]; then
-	einfo "Dep tarball now at: $(portageq distdir)/${P}-deps.tar.xz!"
+	einfo "Dep tarball now at: $(portageq distdir)/${P}-crates.tar.xz!"
 	rsync --mkpath -av -P "$(portageq distdir)/${P}-crates.tar.xz" dev.gentoo.org:~/public_html/distfiles/${CATEGORY}/${PN}/${P}-crates.tar.xz
 fi
