@@ -78,7 +78,7 @@ generate-docs_create_tarball() {
 	# within the tarball for posterity.
 	cp {${0},$(dirname ${BASH_SOURCE}/generate-docs.bashlib)} "${dir}"/${P}-docs/ || { eerror "Failed to embed script within tarball. Exiting!" ; exit 1 ; }
 
-	tar ${REPRODUCIBLE_TAR_ARGS} -caf "${dir}"/${P}-docs.tar.xz -C "${dir}" ${P}-docs/
+	LC_ALL=C TZ=UTC tar ${REPRODUCIBLE_TAR_ARGS} -caf "${dir}"/${P}-docs.tar.xz -C "${dir}" ${P}-docs/
 	eend ${?} || { eerror "Creating tarball failed!" ; exit 1 ; }
 
 	einfo "Tarball at ${dir}/${P}-docs.tar.xz"
