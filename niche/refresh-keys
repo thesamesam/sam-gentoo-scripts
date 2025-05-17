@@ -8,6 +8,8 @@ KEYSERVERS=(
         hkps://keys.openpgp.org
 	hkps://pgp.surfnet.nl
         keyserver.pgp.com
+	keys.gnupg.net
+	pgpkeys.eu
 )
 
 for keyserver in "${KEYSERVERS[@]}" ; do

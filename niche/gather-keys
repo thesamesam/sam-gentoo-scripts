@@ -11,6 +11,7 @@ KEYSERVERS=(
 	hkps://keys.gentoo.org
 	hkps://keys.openpgp.org
 	keyserver.pgp.com
+	keys.gnupg.net
 )
 
 tmp=$(mktemp -d)
