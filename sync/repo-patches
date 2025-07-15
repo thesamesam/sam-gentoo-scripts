@@ -42,7 +42,7 @@ for patch in ${patches[@]} ; do
 done
 
 if (( ${patched_any} )) ; then
-	ebegin "Regenerating cache"
+	ebegin "Regenerating cache for ${repository_name}"
 
 	if type -P pk > /dev/null && [[ -e "${repository_path}/profiles/eapi" ]]; then
 		opts=(
@@ -54,7 +54,7 @@ if (( ${patched_any} )) ; then
 			opts+=( --use-local )
 		fi
 
-		pk repo metadata regen "${opts[@]}" "${repository_path}"
+		runuser -u portage -- pk repo metadata regen "${opts[@]}" "${repository_path}"
 	elif type -P pmaint > /dev/null ; then
 		opts=(
 			--quiet
@@ -67,7 +67,7 @@ if (( ${patched_any} )) ; then
 			opts+=( --use-local-desc )
 		fi
 
-		pmaint regen "${opts[@]}" "${repository_name}"
+		runuser -u portage -- pmaint regen "${opts[@]}" "${repository_name}"
 	else
 		opts=(
 			--jobs "$(nproc)"
@@ -78,7 +78,7 @@ if (( ${patched_any} )) ; then
 			opts+=( --update-use-local-desc )
 		fi
 
-		egencache --update "${opts[@]}" --repo "${repository_name}"
+		runuser -u portage -- egencache --update "${opts[@]}" --repo "${repository_name}"
 	fi
 
 	eend $? || exit
