@@ -4,8 +4,10 @@
 # syncing the respective repo.
 . /lib/gentoo/functions.sh
 
+# TODO: PORTAGE_QUIET, PORTAGE_VERBOSE handling
+
 repository_name=${1}
-#sync_uri=${2}
+sync_uri=${2}
 repository_path=${3}
 patched_any=0
 ret=0
@@ -16,51 +18,68 @@ if [[ -z "${patches[@]}" ]] ; then
 	exit
 fi
 
-(
-	cd "${repository_path}" || exit 1
+cd "${repository_path}" || exit 1
 
-	# TODO: Check if the repository is volatile?
-	if git rev-parse --git-dir > /dev/null 2>&1; then
-		git clean -qfdx
-		git reset --quiet --hard HEAD
-	fi
-)
+# TODO: Check if the repository is volatile
+if git rev-parse --git-dir &> /dev/null ; then
+	git -C "${repository_path}" clean -qfdx
+	git -C "${repository_path}" reset --quiet --hard HEAD
+fi
 
 for patch in ${patches[@]} ; do
 	patched_any=1
-	(
-		ebegin "Applying ${patch}"
-		cd "${repository_path}" || exit 1
 
-		#if patch -p1 -sN -f -g0 --no-backup-if-mismatch --dry-run < "${patch}" ; then
-		#       patch -p1 -sN -f -g0 --no-backup-if-mismatch < "${patch}"
-		#else
-		#       ewarn "Skipping ${patch} because dry run failed (already applied?)"
-		#fi
+	ebegin "Applying ${patch}"
+	if git -C "${repository_path}" apply --quiet --check "${patch}" ; then
+		git -C "${repository_path}" apply --quiet "${patch}"
+		ret=$?
+	else
+		ret=$?
+		ewarn "Skipping ${patch} because dry run failed (already applied?)"
+	fi
 
-		if git apply --quiet --check "${patch}" ; then
-			git apply --quiet "${patch}"
-		else
-			ret=$?
-			ewarn "Skipping ${patch} because dry run failed (already applied?)"
-		fi
-
-		eend ${ret}
-	)
+	eend ${ret}
 done
 
-if [[ ${patched_any} -eq 1 ]] ; then
-        ebegin "Regenerating cache"
+if (( ${patched_any} )) ; then
+	ebegin "Regenerating cache"
 
-	# sys-apps/pkgcore
-	#pmaint regen -q "${repository_name}"
+	if type -P pk > /dev/null && [[ -e "${repository_path}/profiles/eapi" ]]; then
+		opts=(
+			--quiet
+			--jobs "$(nproc)"
+		)
 
-	# sys-apps/pkgcraft-tools
-	pk repo -q metadata "${repository_name}"
+		if ! [[ -f "${repository_path}"/profiles/use.local.desc ]] ; then
+			opts+=( --use-local )
+		fi
 
-	# sys-apps/portage
-	#egencache --update --repo gentoo
+		pk repo metadata regen "${opts[@]}" "${repository_path}"
+	elif type -P pmaint > /dev/null ; then
+		opts=(
+			--quiet
+			--threads "$(nproc)"
 
-	ret=$?
-	eend ${ret} || exit ${ret}
+			--pkg-desc-index
+		)
+
+		if ! [[ -f "${repository_path}"/profiles/use.local.desc ]] ; then
+			opts+=( --use-local-desc )
+		fi
+
+		pmaint regen "${opts[@]}" "${repository_name}"
+	else
+		opts=(
+			--jobs "$(nproc)"
+			--load-average "$(nproc)"
+		)
+
+		if ! [[ -f "${repository_path}"/profiles/use.local.desc ]] ; then
+			opts+=( --update-use-local-desc )
+		fi
+
+		egencache --update "${opts[@]}" --repo "${repository_name}"
+	fi
+
+	eend $? || exit
 fi
