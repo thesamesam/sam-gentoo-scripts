@@ -1,0 +1,75 @@
+#!/bin/bash
+set -x
+
+FF_BLD="/opt/sam-debugging/ff/build"
+FF_SRC="/opt/sam-debugging/ff/firefox-135.0.1"
+FF_CFG="/opt/sam-debugging/ff/.mozconfig"
+
+mkdir -p "${FF_BLD}"
+
+export CC=/tmp/gcc/bin/gcc
+export CXX=/tmp/gcc/bin/g++
+export MAKEOPTS="-j$(nproc) -l$(nproc)"
+
+export CFLAGS="-O3 -march=znver2 -ggdb3"
+export CXXFLAGS="-O3 -march=znver2 -ggdb3"
+
+export MOZ_MAKE_FLAGS="${MAKEOPTS}"
+export MOZCONFIG="${FF_CFG}"
+export MOZ_NOSPAM=1
+
+cat <<-EOF > ${FF_CFG}
+ac_add_options --enable-application=browser
+ac_add_options --enable-project=browser
+ac_add_options --allow-addon-sideload
+ac_add_options --disable-cargo-incremental
+ac_add_options --disable-crashreporter
+ac_add_options --disable-disk-remnant-avoidance
+ac_add_options --disable-geckodriver
+ac_add_options --disable-install-strip
+ac_add_options --disable-legacy-profile-creation
+ac_add_options --disable-parental-controls
+ac_add_options --disable-strip
+ac_add_options --disable-tests
+ac_add_options --disable-updater
+ac_add_options --disable-wmf
+ac_add_options --enable-negotiateauth
+ac_add_options --enable-new-pass-manager
+ac_add_options --enable-official-branding
+ac_add_options --enable-release
+ac_add_options --enable-system-policies
+ac_add_options --host=x86_64-pc-linux-gnu
+ac_add_options --libdir=/usr/lib64
+ac_add_options --prefix=/usr
+ac_add_options --target=x86_64-pc-linux-gnu
+ac_add_options --without-ccache
+ac_add_options --with-intl-api
+ac_add_options --with-libclang-path=/usr/lib/llvm/19/lib64
+ac_add_options --with-toolchain-prefix=x86_64-pc-linux-gnu-
+ac_add_options --with-unsigned-addon-scopes=app,system
+ac_add_options --x-includes=/usr/include
+ac_add_options --x-libraries=/usr/lib64
+ac_add_options --enable-update-channel=release
+ac_add_options --enable-rust-simd
+ac_add_options --enable-sandbox
+ac_add_options --enable-dbus
+ac_add_options --disable-libproxy
+ac_add_options --disable-valgrind
+ac_add_options --enable-hardening
+ac_add_options --enable-audio-backends=pulseaudio
+ac_add_options --disable-necko-wifi
+ac_add_options --enable-default-toolkit=cairo-gtk3-x11-wayland
+ac_add_options --without-wasm-sandboxed-libraries
+ac_add_options --enable-linker=bfd
+ac_add_options --disable-debug
+ac_add_options --enable-debug-symbols
+ac_add_options --enable-optimize=-O3
+ac_add_options --enable-elf-hack=relr
+ac_add_options --enable-lto=full
+ac_add_options XARGS=/usr/bin/xargs
+mk_add_options MOZ_OBJDIR="${FF_BLD}"
+EOF
+
+cd "${FF_BLD}" || exit 1
+"${FF_SRC}"/configure || exit 1
+exec "${FF_SRC}"/mach build --verbose
