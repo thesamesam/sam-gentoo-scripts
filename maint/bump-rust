@@ -73,8 +73,11 @@ export S=$(sed -nr 's/^declare -x S="(.*)"/\1/p' "${PORTAGE_TMPDIR}"/portage/${C
 # Find Cargo.toml file(s) even if not at the toplevel
 cargo_dirs=$(find "${S}" -maxdepth 4 -type f -name Cargo.toml -print | sed 's:/[^/]*$::' | sort -u)
 
-ebegin "Running 'pycargoebuild -i ${ebuild} -c ${PYCARGOEBUILD_EXTRA_ARGS[@]} ${cargo_dirs[@]}'"
-pycargoebuild -i ${ebuild} -c "${PYCARGOEBUILD_EXTRA_ARGS[@]}" "${cargo_dirs[@]}" || exit 1
+# Force the tarball to be named after the package
+crate_tarball="$(portageq distdir)/${P}-crates.tar.xz"
+
+ebegin "Running 'pycargoebuild -i ${ebuild} -c --crate-tarball-path ${crate_tarball} ${PYCARGOEBUILD_EXTRA_ARGS[@]} ${cargo_dirs[@]}'"
+pycargoebuild -i ${ebuild} -c --crate-tarball-path ${crate_tarball} "${PYCARGOEBUILD_EXTRA_ARGS[@]}" "${cargo_dirs[@]}" || exit 1
 eend $? || exit 1
 
 # 5. Undo the sed we did earlier to the ebuild
