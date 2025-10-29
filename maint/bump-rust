@@ -70,8 +70,11 @@ ebuild ${ebuild} clean unpack || exit 1
 # Borrowed from mgorny-dev-tools' pkgdiff
 export S=$(sed -nr 's/^declare -x S="(.*)"/\1/p' "${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/temp/environment)
 
-ebegin "Running 'pycargoebuild -i ${ebuild} -c ${S}'"
-pycargoebuild -i ${ebuild} -c ${S} "${PYCARGOEBUILD_EXTRA_ARGS[@]}" || exit 1
+# Find Cargo.toml file(s) even if not at the toplevel
+cargo_dirs=$(find "${S}" -maxdepth 4 -type f -name Cargo.toml -print | sed 's:/[^/]*$::' | sort -u)
+
+ebegin "Running 'pycargoebuild -i ${ebuild} -c ${PYCARGOEBUILD_EXTRA_ARGS[@]} ${cargo_dirs[@]}'"
+pycargoebuild -i ${ebuild} -c "${PYCARGOEBUILD_EXTRA_ARGS[@]}" "${cargo_dirs[@]}" || exit 1
 eend $? || exit 1
 
 # 5. Undo the sed we did earlier to the ebuild
