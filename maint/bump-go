@@ -226,4 +226,6 @@ ebuild ${ebuild} clean manifest || exit 1
 einfo "All done."
 einfo "Dep tarball now at: $(portageq distdir)/${P}-deps.tar.xz!"
 
-rsync --mkpath -av -P "$(portageq distdir)/${P}-deps.tar.xz" dev.gentoo.org:~/public_html/distfiles/${CATEGORY}/${PN}/${P}-deps.tar.xz
+# Only attempt to push if we are running in a @gentoo.org developer's env
+gpg --list-secret-keys '@gentoo.org' >/dev/null 2>&1 && \
+	rsync --mkpath -av -P "$(portageq distdir)/${P}-deps.tar.xz" dev.gentoo.org:~/public_html/distfiles/${CATEGORY}/${PN}/${P}-deps.tar.xz
