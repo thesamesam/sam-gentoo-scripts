@@ -92,5 +92,7 @@ einfo "All done."
 
 if [[ -z ${EXISTING_CRATES_TARBALL} ]]; then
 	einfo "Dep tarball now at: $(portageq distdir)/${P}-crates.tar.xz!"
-	rsync --mkpath -av -P "$(portageq distdir)/${P}-crates.tar.xz" dev.gentoo.org:~/public_html/distfiles/${CATEGORY}/${PN}/${P}-crates.tar.xz
+	# Only attempt to push if we are running in a @gentoo.org developer's env
+	gpg --list-secret-keys '@gentoo.org' >/dev/null 2>&1 && \
+		rsync --mkpath -av -P "$(portageq distdir)/${P}-crates.tar.xz" dev.gentoo.org:~/public_html/distfiles/${CATEGORY}/${PN}/${P}-crates.tar.xz
 fi
