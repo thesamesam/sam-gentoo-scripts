@@ -41,6 +41,17 @@ export CTARGET
 
 : "${TMPDIR:=/tmp}"
 
+cleanup() {
+	[[ ${CLEANUP} == 1 ]] || return
+
+	(
+		git -C "${gitdir}" reset --hard HEAD
+		git -C "${gitdir}" clean -fdx
+	)
+}
+
+trap cleanup EXIT
+
 if [[ -z ${CHOST} ]] ; then
 	die "No CHOST set!"
 fi
