@@ -152,8 +152,20 @@ binutils_config_args=(
 )
 
 skip "${srcdir}"/configure "${binutils_config_args[@]}"
-skip make "${binutils_make_args[@]}" all-ld
-make "${binutils_make_args[@]}" check-ld || exit 1 # RUNTESTFLAGS="input-remap.exp" || exit 1
+skip make "${binutils_make_args[@]}" all # -gas
+skip make -Oline install # -gas
+
+# At this point, your GCC is at ${prefix}/bin/gcc, ${prefix}/bin/g++, etc.
+export CC="${CC:-gcc} -B/tmp/binutils/bin"
+export CXX="${CXX:-g++} -B/tmp/binutils/bin"
+
+#
+# Bug-specific testcase goes here
+#
+
+#${prefix}/bin/as /tmp/a.s -32 || { echo "gas failed" ; exit 1 ; }
+#echo "gas succeeded"
+#make -Onone "${binutils_make_args[@]}" check-ld || exit 1 # RUNTESTFLAGS="input-remap.exp" || exit 1
 #skip make -Oline install
 
 #${builddir}/gas/as-new /tmp/foo.s -O2 || exit 1
