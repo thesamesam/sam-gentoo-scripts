@@ -39,6 +39,8 @@ export CHOST
 : "${CTARGET:=$(portageq envvar CTARGET)}"
 export CTARGET
 
+: "${TMPDIR:=/tmp}"
+
 if [[ -z ${CHOST} ]] ; then
 	die "No CHOST set!"
 fi
@@ -47,8 +49,8 @@ fi
 # Configuration
 #
 
-prefix="/tmp/gcc"
-builddir="/tmp/build"
+prefix="${TMPDIR}/gcc"
+builddir="${TMPDIR}/build"
 
 # Sensible defaults for sam
 if [[ ${LOGNAME} == sam ]] ; then
@@ -233,15 +235,15 @@ if false ; then
 	#fatal cd ~/git/gcc/host-x86_64-pc-linux-gnu/gcc
 
 	#rm output.txt
-	#./xgcc -B$(pwd) -c -std=c++20 /tmp/foo.cxx &> output.txt
-	#if grep -q "/tmp/foo.cxx:.*error:" output.txt ; then
+	#./xgcc -B$(pwd) -c -std=c++20 "${TMPDIR}/foo.cxx" &> output.txt
+	#if grep -q "${TMPDIR}/foo.cxx:.*error:" output.txt ; then
 	#      exit 1
 	#fi
 
-	#/tmp/bisect/bin/g++ -O2 -Wall -c /tmp/foo.cxx
-	#/tmp/bisect/bin/gcc -c -O2 -march=alderlake -g /tmp/foo.cxx
-	#/tmp/bisect/bin/g++ -Wfatal-errors '-Werror=stringop-overflow' '-march=nehalem' -O3 -std=c++17 /tmp/foo.cxx -c
-	"${prefix}/bin/g++" -Wfatal-errors -O2 /tmp/SkOpAngle.ii
+	#"${TMPDIR}/bisect/bin/g++" -O2 -Wall -c "${TMPDIR}/foo.cxx"
+	#"${TMPDIR}/bisect/bin/gcc" -c -O2 -march=alderlake -g "${TMPDIR}/foo.cxx"
+	#"${TMPDIR}/bisect/bin/g++ "-Wfatal-errors '-Werror=stringop-overflow' '-march=nehalem' -O3 -std=c++17 "${TMPDIR}/foo.cxx" -c
+	# "${prefix}/bin/g++" -Wfatal-errors -O2 "${TMPDIR}/SkOpAngle.ii"
 	ret=$?
 
 	case ${ret} in
@@ -260,7 +262,7 @@ fi
 if false ; then
 	for x in $(seq 1); do
 		# We deliberately exit *0* if it fails because we're bisecting for the bad commit, not good
-		timeout 1m /tmp/bisect/bin/g++ -Wfatal-errors -O2 /tmp/reduced.ii -c
+		timeout 1m "${TMPDIR}/bisect/bin/g++" -Wfatal-errors -O2 "${TMPDIR}/reduced.ii" -c
 		timeout_result=$?
 
 		case ${timeout_result} in
