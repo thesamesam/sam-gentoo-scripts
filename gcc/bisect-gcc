@@ -239,11 +239,6 @@ else
 	skip make -Oline install
 fi
 
-(
-	fatal cd "${gitdir}"
-	fatal git clean -fdx
-	fatal git reset --hard HEAD
-)
 
 #
 # Bug-specific testcase goes here
