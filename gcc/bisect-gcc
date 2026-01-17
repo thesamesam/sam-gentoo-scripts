@@ -118,11 +118,17 @@ export CFLAGS="-O2 -fdiagnostics-color=always -fno-checking"
 export CXXFLAGS="${CFLAGS}"
 export LDFLAGS="-Wl,-O1 -Wl,--as-needed"
 
-export STAGE1_CFLAGS="${STAGE1_CFLAGS:-${CFLAGS}}"
-export STAGE1_LDFLAGS="${STAGE1_LDFLAGS:-${LDFLAGS}}"
-export BOOT_CFLAGS="${BOOT_CFLAGS:-${CFLAGS}}"
-export BOOT_LDFLAGS="${BOOT_LDFLAGS:-${LDFLAGS}}"
-export LDFLAGS_FOR_TARGET="${LDFLAGS_FOR_TARGET:-${LDFLAGS}}"
+: "${STAGE1_CFLAGS:=${CFLAGS}}"
+: "${STAGE1_LDFLAGS:=${LDFLAGS}}"
+: "${BOOT_CFLAGS:=${CFLAGS}}"
+: "${BOOT_LDFLAGS:=${LDFLAGS}}"
+: "${LDFLAGS_FOR_TARGET:=${LDFLAGS}}"
+
+export STAGE1_CFLAGS
+export STAGE1_LDFLAGS
+export BOOT_CFLAGS
+export BOOT_LDFLAGS
+export LDFLAGS_FOR_TARGET
 
 gcc_make_args=(
 	-j$(nproc) -l$(nproc)
