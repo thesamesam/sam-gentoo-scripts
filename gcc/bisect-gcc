@@ -104,8 +104,7 @@ fi
 if [[ -n ${CLEANUP} && ${CLEANUP} == 1 ]] ; then
 	fatal rm -rf "${builddir}"
 
-	fatal git -C "${gitdir}" clean -fdx
-	fatal git -C "${gitdir}" reset --hard HEAD
+	cleanup
 	patch -d "${gitdir}" -f -p1 < /root/gcc-musl/11.4.0-50_all_calloc_libgccjit.patch || true
 
 	#patch -d "${gitdir}" -f -p1 < /tmp/0001-Add-param-max-devirt-targets.patch || true
