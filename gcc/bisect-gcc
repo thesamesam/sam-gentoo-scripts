@@ -32,11 +32,11 @@ skip() {
 	fi
 }
 
-: "${CBUILD:-$(portageq envvar CBUILD)}"
+: "${CBUILD:=$(portageq envvar CBUILD)}"
 export CBUILD
-: "${CHOST:-$(portageq envvar CHOST)}"
+: "${CHOST:=$(portageq envvar CHOST)}"
 export CHOST
-: "${CTARGET:-$(portageq envvar CTARGET)}"
+: "${CTARGET:=$(portageq envvar CTARGET)}"
 export CTARGET
 
 if [[ -z ${CHOST} ]] ; then
