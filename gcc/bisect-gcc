@@ -54,9 +54,9 @@ builddir="${TMPDIR}/build"
 
 # Sensible defaults for sam
 if [[ ${LOGNAME} == sam ]] ; then
-	gitdir="/home/sam/git/gcc"
+	gitdir=~${LOGNAME}/git/gcc
 else
-	: "${gitdir:=/path/to/gcc}"
+	: "${gitdir:=${HOME}/gcc}"
 
 	#prefix="/media/guest-homedirs/sam/build/bisect"
 	#gitdir="/media/guest-homedirs/sam/git/gcc"
