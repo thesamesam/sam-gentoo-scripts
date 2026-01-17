@@ -1,22 +1,30 @@
 #!/usr/bin/env bash
-# TODO:
+# all hppa bugs I've filed?
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=103202
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107248
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107617 (maybe)
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109170
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=113385
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=13421
-# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109170
-# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107617 (maybe)
-# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107248
-# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=103202
-# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87188
-# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86511
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57708
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=59777
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=62025
-# all hppa bugs I've filed?
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=79910
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82621
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86511
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87188
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=89112
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78253
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78407 (maybe)
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=72488
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=67651 (maybe)
 . /lib/gentoo/functions.sh
 
 readarray -d '' -t commits < <(
 	git -C /home/sam/git/gcc log \
 		--grep="\s(?:(?:bug|PR|BZ)\s+\#?\s*(?:[a-z0-9+-]+\/)?(?:\/)?|Bug:\s+https:\/\/$bug_host\/bugzilla\/show_bug\.cgi\?id=)(\d+)(.*)$" \
 		-P \
-		master \
+		gcc-4_1_1-release..releases/gcc-9.1.0 \
 		--format="format:%H" \
 		-z
 	)
@@ -46,9 +54,10 @@ for commit in "${commits[@]}" ; do
 		eindent
 		einfo "summary: $(git -C /home/sam/git/gcc log --format='format:%s' ${commit}~1..${commit})"
 		einfo "check: git -C /home/sam/git/gcc log -p ${commit}~1..${commit}"
-		#for bug_num in "${bug_nums[@]}" ; do
-		#	einfo "bug: https://gcc.gnu.org/PR${bug_num}"
-		#done
+		for bug_num in "${bug_nums[@]}" ; do
+			einfo "bug: https://gcc.gnu.org/PR${bug_num}"
+			break
+		done
 		eoutdent
 	fi
 done
