@@ -225,7 +225,9 @@ if [[ ${build_from_portage} == 1 ]] ; then
 	gcc_ver=$(<gcc/BASE-VER)
 	gcc_ver=${gcc_ver%%.*}
 
-	EXTRA_ECONF="${gcc_config_args[*]}" USE="vanilla -rust -openmp -fortran -pgo -lto -jit" skip ebuild "${repo_path}/sys-devel/gcc/gcc-${gcc_ver}".*.9999.ebuild digest clean merge
+	EXTRA_ECONF="${gcc_config_args[*]}" USE="vanilla -rust -openmp -fortran -pgo -lto -jit" skip ebuild \
+		"${repo_path}/sys-devel/gcc/gcc-${gcc_ver}".*.9999.ebuild \
+		digest clean merge
 
 	sudo gcc-config "${CHOST}-${gcc_ver}"
 	source /etc/profile
