@@ -10,8 +10,9 @@ KEYSERVERS=(
 	hkps://pgp.mit.edu
 	hkps://keys.gentoo.org
 	hkps://keys.openpgp.org
-	keyserver.pgp.com
-	keys.gnupg.net
+	hkps://keyserver.pgp.com
+	hkps://keys.gnupg.net
+	hkps://pgpkeys.eu
 )
 
 tmp=$(mktemp -d)
