@@ -105,12 +105,20 @@ if [[ -n ${CLEANUP} && ${CLEANUP} == 1 ]] ; then
 	fatal rm -rf "${builddir}"
 fi
 
-(
-	fatal cd "${gitdir}"
-	fatal git clean -fdx
-	fatal git reset --hard HEAD
-	patch -f -p1 < /root/gcc-musl/11.4.0-50_all_calloc_libgccjit.patch || true
-)
+fatal git -C "${gitdir}" clean -fdx
+fatal git -C "${gitdir}" reset --hard HEAD
+patch -d "${gitdir}" -f -p1 < /root/gcc-musl/11.4.0-50_all_calloc_libgccjit.patch || true
+
+#patch -d "${gitdir}" -f -p1 < /tmp/0001-Add-param-max-devirt-targets.patch || true
+
+#patch -d "${gitdir}" -f -p1 < /tmp/float-patches/0001-middle-end-c-i386-libgcc-std-bfloat16_t-and-__bf16-a.patch || true
+#patch -d "${gitdir}" -f -p1 < /tmp/float-patches/0001-builtins-Add-various-__builtin_-f-16-32-64-128-32x-6.patch || true
+#patch -d "${gitdir}" -f -p1 < /tmp/float-patches/0002-builtins-Add-__builtin_nextafterf16b-builtin.patch || true
+#patch -d "${gitdir}" -f -p1 < /tmp/float-patches/0003-builtins-Add-various-complex-builtins-for-_Float-16-.patch || true
+
+#patch -d "${gitdir}" -f -p1 < /root/gcc-musl/11.4.0-50_all_calloc_libgccjit.patch || true
+#patch -d "${gitdir}" -f -p1 < /etc/portage/patches/sys-devel/gcc\:16/0008-ada-pic.patch || true
+#patch -d "${gitdir}" -f -p1 < /etc/portage/patches/sys-devel/gcc\:16/ada-fpie-hack.patch || true
 
 fatal mkdir -p "${builddir}"
 fatal cd "${builddir}"
