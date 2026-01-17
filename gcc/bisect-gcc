@@ -73,10 +73,10 @@ build_from_portage=0
 export ACCEPT_KEYWORDS="**"
 export FEATURES="ccache -collision-protect -protect-owned -userfetch -usersync -userpriv -usersandbox"
 export EVCS_OFFLINE=1
-export EGIT_CLONE_TYPE=mirror
+export EGIT_CLONE_TYPE="mirror"
 export EGIT_OVERRIDE_REPO_GCC="file:///${gitdir}"
-export EGIT_OVERRIDE_COMMIT_GCC=$(git rev-parse HEAD)
-#export EGIT_OVERRIDE_COMMIT_GCC=e4b5fec75aa8d0d01f6e042ec2888ef92eaa932a
+export EGIT_OVERRIDE_COMMIT_GCC="$(git rev-parse HEAD)"
+#export EGIT_OVERRIDE_COMMIT_GCC="e4b5fec75aa8d0d01f6e042ec2888ef92eaa932a"
 
 if [[ -z ${prefix} ]] ; then
 	die "No prefix set!"
@@ -133,7 +133,7 @@ export BOOT_LDFLAGS
 export LDFLAGS_FOR_TARGET
 
 gcc_make_args=(
-	-j$(nproc) -l$(nproc)
+	-j"$(nproc)" -l"$(nproc)"
 	CFLAGS="${CFLAGS}"
 	CXXFLAGS="${CXXFLAGS}"
 	LDFLAGS="${LDFLAGS}"
@@ -171,8 +171,8 @@ gcc_config_args=(
 	--disable-objc-gc
 	--disable-systemtap
 	--disable-werror
-	--enable-languages=c,c++ #,fortran
-	--prefix=${prefix}
+	--enable-languages="c,c++" #,fortran
+	--prefix="${prefix}"
 
 	--enable-checking=release # yes,extra,rtl
 
@@ -196,7 +196,7 @@ gcc_config_args=(
 	#--disable-stage1-checking
 	#
 	#--enable-multilib
-	#--with-multilib-list=m32,m64
+	#--with-multilib-list="m32,m64"
 )
 
 # Try hard to make sure we're actually using the newly-built thing
@@ -208,10 +208,10 @@ if [[ ${build_from_portage} == 1 ]] ; then
 
 	EXTRA_ECONF="${gcc_config_args[@]}" USE="vanilla -rust -openmp -fortran -pgo -lto -jit" skip ebuild "${repo_path}/sys-devel/gcc/gcc-${gcc_ver}".*.9999.ebuild digest clean merge
 
-	sudo gcc-config ${CHOST}-${gcc_ver}
+	sudo gcc-config "${CHOST}-${gcc_ver}"
 	source /etc/profile
-	export CC=${CHOST}-gcc-${gcc_ver}
-	export CXX=${CHOST}-g++-${gcc_ver}
+	export CC="${CHOST}-gcc-${gcc_ver}"
+	export CXX="${CHOST}-g++-${gcc_ver}"
 else
 	skip "${gitdir}"/configure "${gcc_config_args[@]}"
 	skip make "${gcc_make_args[@]}" -Oline V=1
