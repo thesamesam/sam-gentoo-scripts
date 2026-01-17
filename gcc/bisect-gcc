@@ -95,9 +95,9 @@ if [[ -n ${CLEANUP} && ${CLEANUP} == 1 ]] ; then
 fi
 
 (
-	cd "${gitdir}"
-	git clean -fdx
-	git reset --hard HEAD
+	fatal cd "${gitdir}"
+	fatal git clean -fdx
+	fatal git reset --hard HEAD
 	patch -f -p1 < /root/gcc-musl/11.4.0-50_all_calloc_libgccjit.patch || true
 )
 
@@ -219,9 +219,9 @@ else
 fi
 
 (
-	cd "${gitdir}"
-	git clean -fdx
-	git reset --hard HEAD
+	fatal cd "${gitdir}"
+	fatal git clean -fdx
+	fatal git reset --hard HEAD
 )
 
 #
