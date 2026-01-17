@@ -2,14 +2,15 @@
 set -u
 
 KEYSERVERS=(
-        hkps://keyserver.ubuntu.com
-        hkps://pgp.mit.edu
-        hkps://keys.gentoo.org
-        hkps://keys.openpgp.org
+	hkps://keyserver.ubuntu.com
+	hkps://pgp.mit.edu
+	hkps://keys.gentoo.org
+	hkps://keys.openpgp.org
 	hkps://pgp.surfnet.nl
-        keyserver.pgp.com
-	keys.gnupg.net
-	pgpkeys.eu
+	hkps://keyserver.pgp.com
+	hkps://keys.gnupg.net
+	hkps://pgpkeys.eu
+	hkps://pgp-servers.net
 )
 
 for keyserver in "${KEYSERVERS[@]}" ; do
