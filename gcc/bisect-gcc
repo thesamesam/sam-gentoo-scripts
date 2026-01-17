@@ -32,9 +32,12 @@ skip() {
 	fi
 }
 
-export CBUILD="${CBUILD:-$(portageq envvar CBUILD)}"
-export CHOST="${CHOST:-$(portageq envvar CHOST)}"
-export CTARGET="${CTARGET:-$(portageq envvar CTARGET)}"
+: "${CBUILD:-$(portageq envvar CBUILD)}"
+export CBUILD
+: "${CHOST:-$(portageq envvar CHOST)}"
+export CHOST
+: "${CTARGET:-$(portageq envvar CTARGET)}"
+export CTARGET
 
 if [[ -z ${CHOST} ]] ; then
 	die "No CHOST set!"
@@ -44,15 +47,14 @@ fi
 # Configuration
 #
 
+prefix="/tmp/gcc"
+builddir="/tmp/build"
+
 # Sensible defaults for sam
 if [[ ${LOGNAME} == sam ]] ; then
-	prefix="/tmp/gcc"
-	builddir="/tmp/build"
 	gitdir="/home/sam/git/gcc"
 else
-	prefix="/tmp/gcc"
-	builddir="/tmp/build"
-	gitdir="/path/to/gcc"
+	: "${gitdir:=/path/to/gcc}"
 
 	#prefix="/media/guest-homedirs/sam/build/bisect"
 	#gitdir="/media/guest-homedirs/sam/git/gcc"
@@ -103,14 +105,14 @@ fatal cd "${builddir}"
 if [[ -n ${CLEANUP} && ${CLEANUP} == 1 ]] ; then
 	# Aggressively clean up the existing build
 	make -C "${builddir}" clean
-	fatal rm -rf build-${CHOST}/ host-${CHOST}/ ${CHOST}/
+	fatal rm -rf "build-${CHOST}/" "host-${CHOST}/" "${CHOST}/"
 	if [[ -d .git ]] ; then
 		git clean -fdx
 	fi
-	fatal rm -rf ${prefix}
+	fatal rm -rf "${prefix}"
 fi
 
-fatal mkdir -p ${prefix}
+fatal mkdir -p "${prefix}"
 
 export CFLAGS="-O2 -fdiagnostics-color=always -fno-checking"
 export CXXFLAGS="${CFLAGS}"
@@ -192,11 +194,11 @@ gcc_config_args=(
 # Try hard to make sure we're actually using the newly-built thing
 # TODO: skip on all of these?
 if [[ ${build_from_portage} == 1 ]] ; then
-	repo_path="$(portageq get_repo_path ${EROOT:-/} gentoo)"
+	repo_path="$(portageq get_repo_path "${EROOT:-/}" gentoo)"
 	gcc_ver=$(<gcc/BASE-VER)
 	gcc_ver=${gcc_ver%%.*}
 
-	EXTRA_ECONF="${gcc_config_args[@]}" USE="vanilla -rust -openmp -fortran -pgo -lto -jit" skip ebuild ${repo_path}/sys-devel/gcc/gcc-${gcc_ver}.*.9999.ebuild digest clean merge
+	EXTRA_ECONF="${gcc_config_args[@]}" USE="vanilla -rust -openmp -fortran -pgo -lto -jit" skip ebuild "${repo_path}/sys-devel/gcc/gcc-${gcc_ver}".*.9999.ebuild digest clean merge
 
 	sudo gcc-config ${CHOST}-${gcc_ver}
 	source /etc/profile
@@ -233,7 +235,7 @@ if false ; then
 	#/tmp/bisect/bin/g++ -O2 -Wall -c /tmp/foo.cxx
 	#/tmp/bisect/bin/gcc -c -O2 -march=alderlake -g /tmp/foo.cxx
 	#/tmp/bisect/bin/g++ -Wfatal-errors '-Werror=stringop-overflow' '-march=nehalem' -O3 -std=c++17 /tmp/foo.cxx -c
-	${prefix}/bin/g++ -Wfatal-errors -O2 /tmp/SkOpAngle.ii
+	"${prefix}/bin/g++" -Wfatal-errors -O2 /tmp/SkOpAngle.ii
 	ret=$?
 
 	case ${ret} in
