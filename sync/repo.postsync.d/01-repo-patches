@@ -25,18 +25,20 @@ fi
 
 cd "${repository_path}" || exit 1
 
+user=$(stat -c '%U' "${repository_path}")
+
 # TODO: Check if the repository is volatile
 if git rev-parse --git-dir &> /dev/null ; then
-	runuser -u portage -- git -C "${repository_path}" clean -qfdx
-	runuser -u portage -- git -C "${repository_path}" reset --quiet --hard HEAD
+	runuser -u ${user} -- git -C "${repository_path}" clean -qfdx
+	runuser -u ${user} -- git -C "${repository_path}" reset --quiet --hard HEAD
 fi
 
 for patch in ${patches[@]} ; do
 	patched_any=1
 
 	ebegin "Applying ${patch}"
-	if runuser -u portage -- git -C "${repository_path}" apply --quiet --check "${patch}" ; then
-		runuser -u portage -- git -C "${repository_path}" apply --quiet "${patch}"
+	if runuser -u ${user} -- git -C "${repository_path}" apply --quiet --check "${patch}" ; then
+		runuser -u ${user} -- git -C "${repository_path}" apply --quiet "${patch}"
 		ret=$?
 	else
 		ret=$?
@@ -59,7 +61,7 @@ if (( ${patched_any} )) ; then
 			opts+=( --use-local )
 		fi
 
-		runuser -u portage -- pk repo metadata regen "${opts[@]}" "${repository_path}"
+		runuser -u ${user} -- pk repo metadata regen "${opts[@]}" "${repository_path}"
 	elif type -P pmaint > /dev/null ; then
 		opts=(
 			--quiet
@@ -72,7 +74,7 @@ if (( ${patched_any} )) ; then
 			opts+=( --use-local-desc )
 		fi
 
-		runuser -u portage -- pmaint regen "${opts[@]}" "${repository_name}"
+		runuser -u ${user} -- pmaint regen "${opts[@]}" "${repository_name}"
 	else
 		opts=(
 			--jobs "$(nproc)"
@@ -83,7 +85,7 @@ if (( ${patched_any} )) ; then
 			opts+=( --update-use-local-desc )
 		fi
 
-		runuser -u portage -- egencache --update "${opts[@]}" --repo "${repository_name}"
+		runuser -u ${user} -- egencache --update "${opts[@]}" --repo "${repository_name}"
 	fi
 
 	eend $? || exit

@@ -5,6 +5,8 @@ repository_name=${1}
 sync_uri=${2}
 repository_path=${3}
 
+user=$(stat -c '%U' "${repository_path}")
+
 if [[ -n "${repository_name}" && ! -d "${repository_path}"/metadata/md5-cache ]]; then
 	ebegin "Regenerating cache for ${repository_name}"
 
@@ -18,7 +20,7 @@ if [[ -n "${repository_name}" && ! -d "${repository_path}"/metadata/md5-cache ]]
 			opts+=( --use-local )
 		fi
 
-		runuser -u portage -- pk repo metadata regen "${opts[@]}" "${repository_path}"
+		runuser -u ${user} -- pk repo metadata regen "${opts[@]}" "${repository_path}"
 	elif type -P pmaint > /dev/null ; then
 		opts=(
 			--quiet
@@ -31,7 +33,7 @@ if [[ -n "${repository_name}" && ! -d "${repository_path}"/metadata/md5-cache ]]
 			opts+=( --use-local-desc )
 		fi
 
-		runuser -u portage -- pmaint regen "${opts[@]}" "${repository_name}"
+		runuser -u ${user} -- pmaint regen "${opts[@]}" "${repository_name}"
 	else
 		opts=(
 			--jobs "$(nproc)"
@@ -42,7 +44,7 @@ if [[ -n "${repository_name}" && ! -d "${repository_path}"/metadata/md5-cache ]]
 			opts+=( --update-use-local-desc )
 		fi
 
-		runuser -u portage -- egencache --update "${opts[@]}" --repo "${repository_name}"
+		runuser -u ${user} -- egencache --update "${opts[@]}" --repo "${repository_name}"
 	fi
 	eend $? || exit
 
@@ -54,7 +56,7 @@ if [[ -n "${repository_name}" && ! -d "${repository_path}"/metadata/md5-cache ]]
 		# either we had no cache to begin with, or where it was invalidated
 		# by repo-patches.
 		ebegin "Copying metadata to /var/cache/edb"
-		runuser -u portage -- rsync -aHAX ${repository_path}/metadata/md5-cache/ /var/cache/edb/dep/${repository_path}
+		runuser -u ${user} -- rsync -aHAX ${repository_path}/metadata/md5-cache/ /var/cache/edb/dep/${repository_path}
 		eend $? || exit
 	fi
 fi
