@@ -1,0 +1,13 @@
+#!/bin/bash
+# This is especially useful for crossdev...
+
+while read -d '' ; do
+	# no .git => probably manual from crossdev or similar
+	# no md5-cache => obvious, but it's not a necessary condition
+	# because it might have been made once and never regenerated.
+	if [[ ! -d ${REPLY}/.git || ! -d ${REPLY}/metadata/md5-cache ]] ; then
+		rm -rf ${REPLY}/metadata/md5-cache
+		/etc/portage/repo.postsync.d/02-generate-cache ${REPLY##/var/db/repos/} '' ${REPLY}
+	fi
+done < <(find /var/db/repos -mindepth 1 -maxdepth 1 -type d -print0)
+
