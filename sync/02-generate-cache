@@ -50,6 +50,9 @@ if [[ -n "${repository_name}" && ! -d "${repository_path}"/metadata/md5-cache ]]
 	if [[ -d ${repository_path}/metadata/md5-cache ]] ; then
 		rm -rf /var/cache/edb/dep/${repository_path}
 
+		# Emulate FEATURES="metadata-transfer" for repositories where
+		# either we had no cache to begin with, or where it was invalidated
+		# by repo-patches.
 		ebegin "Copying metadata to /var/cache/edb"
 		runuser -u portage -- rsync -aHAX ${repository_path}/metadata/md5-cache/ /var/cache/edb/dep/${repository_path}
 		eend $? || exit
