@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+. /lib/gentoo/functions.sh
+
+repository_name=${1}
+sync_uri=${2}
+repository_path=${3}
+
+if [[ -n "${repository_name}" && ! -d "${repository_path}"/metadata/md5-cache ]]; then
+	ebegin "Regenerating cache for ${repository_name}"
+
+	if type -P pk > /dev/null && [[ -e "${repository_path}/profiles/eapi" ]]; then
+		opts=(
+			--quiet
+			--jobs "$(nproc)"
+		)
+
+		if ! [[ -f "${repository_path}"/profiles/use.local.desc ]] ; then
+			opts+=( --use-local )
+		fi
+
+		runuser -u portage -- pk repo metadata regen "${opts[@]}" "${repository_path}"
+	elif type -P pmaint > /dev/null ; then
+		opts=(
+			--quiet
+			--threads "$(nproc)"
+
+			--pkg-desc-index
+		)
+
+		if ! [[ -f "${repository_path}"/profiles/use.local.desc ]] ; then
+			opts+=( --use-local-desc )
+		fi
+
+		runuser -u portage -- pmaint regen "${opts[@]}" "${repository_name}"
+	else
+		opts=(
+			--jobs "$(nproc)"
+			--load-average "$(nproc)"
+		)
+
+		if ! [[ -f "${repository_path}"/profiles/use.local.desc ]] ; then
+			opts+=( --update-use-local-desc )
+		fi
+
+		runuser -u portage -- egencache --update "${opts[@]}" --repo "${repository_name}"
+	fi
+	eend $? || exit
+
+	# May not exist if repository has no ebuilds
+	if [[ -d ${repository_path}/metadata/md5-cache ]] ; then
+		rm -rf /var/cache/edb/dep/${repository_path}
+
+		ebegin "Copying metadata to /var/cache/edb"
+		rsync -aHAX ${repository_path}/metadata/md5-cache/ /var/cache/edb/dep/${repository_path}
+		eend $? || exit
+	fi
+fi
