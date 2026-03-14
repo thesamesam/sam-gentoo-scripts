@@ -2,10 +2,15 @@
 # This is especially useful for crossdev...
 
 while read -d '' ; do
-	# no .git => probably manual from crossdev or similar
-	# no md5-cache => obvious, but it's not a necessary condition
-	# because it might have been made once and never regenerated.
-	if [[ ! -d ${REPLY}/.git || ! -d ${REPLY}/metadata/md5-cache ]] ; then
+	[[ ${REPLY} == @(gentoo|kde) ]] && continue
+
+	# * no .git => probably manual from crossdev or similar
+	# * no md5-cache => obvious, but it's not a necessary condition
+	#   because it might have been made once and never regenerated.
+	# * not owned by root or portage => likely not Portage managed or
+	#   synced by Portage, so in need of cache.
+	owner=$(stat -c '%U' ${REPLY})
+	if [[ ! -d ${REPLY}/.git || ! -d ${REPLY}/metadata/md5-cache || ${owner} != @(root|portage) ]] ; then
 		rm -rf ${REPLY}/metadata/md5-cache
 		/etc/portage/repo.postsync.d/02-generate-cache ${REPLY##/var/db/repos/} '' ${REPLY}
 	fi
