@@ -51,7 +51,7 @@ if [[ -n "${repository_name}" && ! -d "${repository_path}"/metadata/md5-cache ]]
 		rm -rf /var/cache/edb/dep/${repository_path}
 
 		ebegin "Copying metadata to /var/cache/edb"
-		rsync -aHAX ${repository_path}/metadata/md5-cache/ /var/cache/edb/dep/${repository_path}
+		runuser -u portage -- rsync -aHAX ${repository_path}/metadata/md5-cache/ /var/cache/edb/dep/${repository_path}
 		eend $? || exit
 	fi
 fi
