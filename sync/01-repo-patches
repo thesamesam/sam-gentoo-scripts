@@ -12,8 +12,13 @@ repository_path=${3}
 patched_any=0
 ret=0
 
-shopt -s nullglob
-patches=/etc/portage/repo-patches/${repository_name}/*.patch
+readarray -d '' -t patches < <(
+	LC_COLLATE=C find \
+		"/etc/portage/repo-patches/${repository_name}" \
+		-type f \
+		-iname "*.patch" \
+		-print0 | sort -z
+)
 if [[ -z "${patches[@]}" ]] ; then
 	exit
 fi
@@ -22,16 +27,16 @@ cd "${repository_path}" || exit 1
 
 # TODO: Check if the repository is volatile
 if git rev-parse --git-dir &> /dev/null ; then
-	git -C "${repository_path}" clean -qfdx
-	git -C "${repository_path}" reset --quiet --hard HEAD
+	runuser -u portage -- git -C "${repository_path}" clean -qfdx
+	runuser -u portage -- git -C "${repository_path}" reset --quiet --hard HEAD
 fi
 
 for patch in ${patches[@]} ; do
 	patched_any=1
 
 	ebegin "Applying ${patch}"
-	if git -C "${repository_path}" apply --quiet --check "${patch}" ; then
-		git -C "${repository_path}" apply --quiet "${patch}"
+	if runuser -u portage -- git -C "${repository_path}" apply --quiet --check "${patch}" ; then
+		runuser -u portage -- git -C "${repository_path}" apply --quiet "${patch}"
 		ret=$?
 	else
 		ret=$?
