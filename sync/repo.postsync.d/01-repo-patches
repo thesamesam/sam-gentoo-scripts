@@ -12,6 +12,8 @@ repository_path=${3}
 patched_any=0
 ret=0
 
+[[ ! -d "${repository_name}" ]] && exit
+
 readarray -d '' -t patches < <(
 	LC_COLLATE=C find \
 		"/etc/portage/repo-patches/${repository_name}" \
