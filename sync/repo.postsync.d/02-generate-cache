@@ -7,12 +7,16 @@ repository_path=${3}
 
 user=$(stat -c '%U' "${repository_path}")
 
+[[ -v PORTAGE_QUIET ]] && quiet="--quiet" verbose=""
+[[ -v PORTAGE_VERBOSE ]] && quiet= verbose="--verbose"
+
 if [[ -n "${repository_name}" && ! -d "${repository_path}"/metadata/md5-cache ]]; then
 	ebegin "Regenerating cache for ${repository_name}"
 
 	if type -P pk > /dev/null && [[ -e "${repository_path}/profiles/eapi" ]]; then
 		opts=(
-			--quiet
+			${quiet}
+			${verbose}
 			--jobs "$(nproc)"
 		)
 
@@ -23,7 +27,8 @@ if [[ -n "${repository_name}" && ! -d "${repository_path}"/metadata/md5-cache ]]
 		runuser -u ${user} -- pk repo metadata regen "${opts[@]}" "${repository_path}"
 	elif type -P pmaint > /dev/null ; then
 		opts=(
-			--quiet
+			${quiet}
+			${verbose}
 			--threads "$(nproc)"
 
 			--pkg-desc-index
@@ -36,6 +41,7 @@ if [[ -n "${repository_name}" && ! -d "${repository_path}"/metadata/md5-cache ]]
 		runuser -u ${user} -- pmaint regen "${opts[@]}" "${repository_name}"
 	else
 		opts=(
+			${verbose}
 			--jobs "$(nproc)"
 			--load-average "$(nproc)"
 		)
@@ -56,7 +62,7 @@ if [[ -n "${repository_name}" && ! -d "${repository_path}"/metadata/md5-cache ]]
 		# either we had no cache to begin with, or where it was invalidated
 		# by repo-patches.
 		ebegin "Copying metadata to /var/cache/edb"
-		runuser -u ${user} -- rsync -aHAX ${repository_path}/metadata/md5-cache/ /var/cache/edb/dep/${repository_path}
+		runuser -u ${user} -- rsync ${quiet} -aHAX ${repository_path}/metadata/md5-cache/ /var/cache/edb/dep/${repository_path}
 		eend $? || exit
 	fi
 fi

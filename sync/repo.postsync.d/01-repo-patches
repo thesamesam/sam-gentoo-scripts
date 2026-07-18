@@ -4,8 +4,6 @@
 # syncing the respective repo.
 . /lib/gentoo/functions.sh
 
-# TODO: PORTAGE_QUIET, PORTAGE_VERBOSE handling
-
 repository_name=${1}
 sync_uri=${2}
 repository_path=${3}
@@ -13,6 +11,9 @@ patched_any=0
 ret=0
 
 [[ ! -d "/etc/portage/repo-patches/${repository_name}" ]] && exit
+
+[[ -v PORTAGE_QUIET ]] && quiet="--quiet" verbose=""
+[[ -v PORTAGE_VERBOSE ]] && quiet= verbose="--verbose"
 
 readarray -d '' -t patches < <(
 	LC_COLLATE=C find \
@@ -31,16 +32,16 @@ user=$(stat -c '%U' "${repository_path}")
 
 # TODO: Check if the repository is volatile
 if git rev-parse --git-dir &> /dev/null ; then
-	runuser -u ${user} -- git -C "${repository_path}" clean -qfdx
-	runuser -u ${user} -- git -C "${repository_path}" reset --quiet --hard HEAD
+	runuser -u ${user} -- git -C "${repository_path}" clean ${quiet} -fdx
+	runuser -u ${user} -- git -C "${repository_path}" reset ${quiet} --hard HEAD
 fi
 
 for patch in ${patches[@]} ; do
 	patched_any=1
 
 	ebegin "Applying ${patch}"
-	if runuser -u ${user} -- git -C "${repository_path}" apply --quiet --check "${patch}" ; then
-		runuser -u ${user} -- git -C "${repository_path}" apply --quiet "${patch}"
+	if runuser -u ${user} -- git -C "${repository_path}" apply ${quiet} --check "${patch}" ; then
+		runuser -u ${user} -- git -C "${repository_path}" apply ${quiet} "${patch}"
 		ret=$?
 	else
 		ret=$?
@@ -55,7 +56,8 @@ if (( ${patched_any} )) ; then
 
 	if type -P pk > /dev/null && [[ -e "${repository_path}/profiles/eapi" ]]; then
 		opts=(
-			--quiet
+			${quiet}
+			${verbose}
 			--jobs "$(nproc)"
 		)
 
@@ -66,7 +68,8 @@ if (( ${patched_any} )) ; then
 		runuser -u ${user} -- pk repo metadata regen "${opts[@]}" "${repository_path}"
 	elif type -P pmaint > /dev/null ; then
 		opts=(
-			--quiet
+			${quiet}
+			${verbose}
 			--threads "$(nproc)"
 
 			--pkg-desc-index
@@ -79,6 +82,7 @@ if (( ${patched_any} )) ; then
 		runuser -u ${user} -- pmaint regen "${opts[@]}" "${repository_name}"
 	else
 		opts=(
+			${verbose}
 			--jobs "$(nproc)"
 			--load-average "$(nproc)"
 		)
