@@ -113,6 +113,11 @@ ebegin "Running '${cmd}'"
 				continue
 			fi
 
+			# Skip testdata (may have deliberately bad go.mod files)
+			if [[ ${dir} =~ /testdata(/|$) ]]; then
+				continue
+			fi
+
 			if [[ -f ${dir}/go.mod ]] ; then
 				einfo "Entering ${dir} which contains a go.mod file"
 				cd ${dir} || exit 1
