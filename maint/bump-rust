@@ -70,8 +70,14 @@ ebuild ${ebuild} clean unpack || exit 1
 # Borrowed from mgorny-dev-tools' pkgdiff
 export S=$(sed -nr 's/^declare -x S="(.*)"/\1/p' "${PORTAGE_TMPDIR}"/portage/${CATEGORY}/${PF}/temp/environment)
 
-# Find Cargo.toml file(s) even if not at the toplevel
-cargo_dirs=$(find "${S}" -maxdepth 4 -type f -name Cargo.toml -print | sed 's:/[^/]*$::' | sort -u)
+# Skip virtual [workspace]-only Cargo.toml files, which recent
+# pycargoebuild errors on.
+mapfile -t cargo_dirs < <(
+	find "${S}" -maxdepth 4 -type f -name Cargo.toml -print |
+		while IFS= read -r toml; do
+			grep -qE '^\[package\]' "${toml}" && printf '%s\n' "${toml%/*}"
+		done | sort -u
+)
 
 # Force the tarball to be named after the package
 crate_tarball="$(portageq distdir)/${P}-crates.tar.xz"
