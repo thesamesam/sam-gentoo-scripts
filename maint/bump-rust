@@ -72,12 +72,11 @@ export S=$(sed -nr 's/^declare -x S="(.*)"/\1/p' "${PORTAGE_TMPDIR}"/portage/${C
 
 # Skip virtual [workspace]-only Cargo.toml files, which recent
 # pycargoebuild errors on.
-mapfile -t cargo_dirs < <(
-	find "${S}" -maxdepth 4 -type f -name Cargo.toml -print |
-		while IFS= read -r toml; do
-			grep -qE '^\[package\]' "${toml}" && printf '%s\n' "${toml%/*}"
-		done | sort -u
-)
+mapfile -d '' -t cargo_dirs < <(
+	find "${S}" -maxdepth 4 -type f -name Cargo.toml -print0 |
+		while IFS= read -d '' -r toml; do
+			grep -qE '^\[package\]' "${toml}" && printf '%s\0' "${toml%/*}"
+		done | sort -uz
 
 # Force the tarball to be named after the package
 crate_tarball="$(portageq distdir)/${P}-crates.tar.xz"
