@@ -77,6 +77,7 @@ mapfile -d '' -t cargo_dirs < <(
 		while IFS= read -d '' -r toml; do
 			grep -qE '^\[package\]' "${toml}" && printf '%s\0' "${toml%/*}"
 		done | sort -uz
+)
 
 # Force the tarball to be named after the package
 crate_tarball="$(portageq distdir)/${P}-crates.tar.xz"
