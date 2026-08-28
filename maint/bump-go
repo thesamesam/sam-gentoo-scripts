@@ -215,9 +215,9 @@ eend $? || exit 1
 ebegin "Collecting licenses"
 (
 	cd "${S}" || exit 1
-	export GOCACHE="${PORTAGE_TMPDIR}/go-cache"
-	export GOMODCACHE="${PORTAGE_TMPDIR}/go-mod"
-	readarray -t LICENSES < <(go-licenses report ./... | cut -d',' -f3 | sort -u ; pipestatus)
+	export GOCACHE="${WORKDIR}/go-cache"
+	export GOMODCACHE="${WORKDIR}/go-mod"
+	readarray -t LICENSES < <(GOFLAGS=-mod=readonly GOPROXY=off GOSUMDB=off go-licenses report ./... | cut -d',' -f3 | sort -u ; pipestatus)
 	wait $! || die "go-licences failed, exited w/ $?"
 
 	MAPPING_FILE=$(portageq get_repo_path / gentoo)/metadata/license-mapping.conf
