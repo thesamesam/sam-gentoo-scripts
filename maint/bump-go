@@ -4,6 +4,22 @@
 . /lib/gentoo/functions.sh || { echo "Could not find gentoo-functions' functions.sh!" ; exit 1; }
 . "$(pkg-config iwdevtools --variable=atomf)" || { eerror "Could not find iwdevtools' atomf library! Emerge app-portage/iwdevtools?" ; exit 1; }
 
+pipestatus() {
+	local status=( "${PIPESTATUS[@]}" )
+	local s ret=0 verbose=""
+
+	[[ ${1} == -v ]] && { verbose=1; shift; }
+	[[ $# -ne 0 ]] && die "usage: ${FUNCNAME} [-v]"
+
+	for s in "${status[@]}"; do
+		[[ ${s} -ne 0 ]] && ret=${s}
+	done
+
+	[[ ${verbose} ]] && echo "${status[@]}"
+
+	return "${ret}"
+}
+
 # The following tar invocations use options specific to GNU tar. On some
 # systems (e.g. Gentoo), `tar` can be a different tool (e.g. bsdtar), and GNU
 # tar can be found as `gtar`.
@@ -193,7 +209,8 @@ ebegin "Collecting licenses"
 	cd "${S}" || exit 1
 	export GOCACHE="${PORTAGE_TMPDIR}/go-cache"
 	export GOMODCACHE="${PORTAGE_TMPDIR}/go-mod"
-	readarray -t LICENSES < <(go-licenses report ./... | cut -d',' -f3 | sort -u)
+	readarray -t LICENSES < <(go-licenses report ./... | cut -d',' -f3 | sort -u ; pipestatus)
+	wait $! || die "go-licences failed, exited w/ $?"
 
 	MAPPING_FILE=$(portageq get_repo_path / gentoo)/metadata/license-mapping.conf
 
@@ -207,7 +224,9 @@ ebegin "Collecting licenses"
 				echo "${license}"
 			fi
 		done | sort -u
+		pipestatus
 	)
+	wait $! || die "creating GENTOO_LICENSES failed, exited w/ $?"
 
 	ebuild=${ORIGINAL_PWD}/${CATEGORY}/${PN}/${ebuild}
 
