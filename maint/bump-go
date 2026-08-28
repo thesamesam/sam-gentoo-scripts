@@ -29,7 +29,7 @@ else
        tar=tar
 fi
 
-for tool in go-licences ebuild rsync ; do
+for tool in go-licenses ebuild rsync ; do
 	hash ${tool} 2>/dev/null || {
 		eerror "Could not find ${tool}, exiting"
 		exit 1
