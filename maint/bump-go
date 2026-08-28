@@ -29,6 +29,14 @@ else
        tar=tar
 fi
 
+for tool in go-licences ebuild rsync ; do
+	hash ${tool} 2>/dev/null || {
+		eerror "Could not find ${tool}, exiting"
+		exit 1
+	}
+done
+
+
 if [[ ${BASH_SOURCE} == */* ]]; then
 	SCRIPT_DIR=${BASH_SOURCE%/*}/
 else
