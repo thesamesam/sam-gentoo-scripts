@@ -238,7 +238,7 @@ ebegin "Collecting licenses"
 
 	ebuild=${ORIGINAL_PWD}/${CATEGORY}/${PN}/${ebuild}
 
-	if grep -q "# Dependent licenses" ${ORIGINAL_PWD}/${ebuild} ; then
+	if grep -q "# Dependent licenses" ${ebuild} ; then
 		# TODO: we need to sed the previous block with the new one. I've failed to build a sed expression for that
 		sed -i -e "/LICENSE=/ a# Dependent licenses\nLICENSE+=\" $(printf " %s" "${GENTOO_LICENSES[@]}")\"" ${ebuild} || exit 1
 	else
