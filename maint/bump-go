@@ -238,12 +238,10 @@ ebegin "Collecting licenses"
 
 	ebuild=${ORIGINAL_PWD}/${CATEGORY}/${PN}/${ebuild}
 
-	if grep -q "# Dependent licenses" ${ebuild} ; then
-		# TODO: we need to sed the previous block with the new one. I've failed to build a sed expression for that
-		sed -i -e "/LICENSE=/ a# Dependent licenses\nLICENSE+=\" $(printf " %s" "${GENTOO_LICENSES[@]}")\"" ${ebuild} || exit 1
-	else
-		sed -i -e "/LICENSE=/ a# Dependent licenses\nLICENSE+=\" $(printf " %s" "${GENTOO_LICENSES[@]}")\"" ${ebuild} || exit 1
-	fi
+	# Delete any existing generated line (+ market) first
+	sed -i -e '/^# Dependent licenses/{N;d}' ${ebuild} || exit 1
+	# Add the generated line under a non-generated line in the ebuild
+	sed -i -e "/LICENSE=/ a# Dependent licenses\nLICENSE+=\" $(printf " %s" "${GENTOO_LICENSES[@]}")\"" ${ebuild} || exit 1
 )
 eend $? || exit 1
 
