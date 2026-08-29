@@ -126,6 +126,7 @@ einfo "Using mode=${mode} to download modules"
 ebegin "Running '${cmd}'"
 (
 	cd "${S}" || exit 1
+	umask 0022
 
 	if [[ ! -f go.mod ]] ; then
 		ewarn "No go.mod in $(pwd)!"
@@ -177,6 +178,7 @@ eend $? || exit 1
 ebegin "Creating tarball"
 (
 	cd "${S}" || exit 1
+	umask 0022
 
 	# Find the (sub)dir we used earlier, even if it was a subdir we guessed
 	cd $(find . -maxdepth 2 -type d -name '*go-mod*' -print -quit || exit 1)/.. || exit 1
@@ -215,6 +217,7 @@ eend $? || exit 1
 ebegin "Collecting licenses"
 (
 	cd "${S}" || exit 1
+	umask 0022
 	export GOCACHE="${WORKDIR}/go-cache"
 	export GOMODCACHE="${WORKDIR}/go-mod"
 	readarray -t LICENSES < <(GOFLAGS=-mod=readonly GOPROXY=off GOSUMDB=off go-licenses report ./... | cut -d',' -f3 | sort -u ; pipestatus)
